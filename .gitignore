@@ -1,0 +1,30 @@
+# Backend
+backend/src/main/resources/application.properties
+backend/target/
+backend/.classpath
+backend/.project
+backend/.settings/
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.npm
+frontend/npm-debug.log
+
+# Environment
+.env
+*.env
+
+# IDE / Editor
+.idea/
+.vscode/
+*.class
+*.jar
+*.war
+.DS_Store
+
+# Misc
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
