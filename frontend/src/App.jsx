@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './pages/Login';
+import OAuthCallback from './pages/OAuthCallback';
+import Dashboard from './pages/Dashboard';
 
 // Placeholder components
-const LoginPage = () => <div>Login Page (Placeholder)</div>;
 const RegisterPage = () => <div>Register Page (Placeholder)</div>;
-const Dashboard = () => <div>Dashboard (Placeholder)</div>;
 const Home = () => <div>Home Page (Placeholder)</div>;
 
 const ProtectedRoute = ({ children }) => {
@@ -23,7 +24,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/oauth2/callback" element={<OAuthCallback />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route 
             path="/dashboard" 
