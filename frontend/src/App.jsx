@@ -1,4 +1,5 @@
 import React from 'react';
+<<<<<<< HEAD
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -11,6 +12,17 @@ import Unauthorized from './pages/Unauthorized';
 import UserDashboard from './pages/UserDashboard';
 import ModeratorDashboard from './pages/ModeratorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+=======
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './pages/Login';
+import OAuthCallback from './pages/OAuthCallback';
+import Dashboard from './pages/Dashboard';
+
+// Placeholder components
+const RegisterPage = () => <div>Register Page (Placeholder)</div>;
+const Home = () => <div>Home Page (Placeholder)</div>;
+>>>>>>> develop
 
 // Home component with navigation
 const Home = () => {
@@ -94,9 +106,13 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/oauth2/callback" element={<OAuthCallback />} />
+<<<<<<< HEAD
           <Route path="/unauthorized" element={<Unauthorized />} />
           
           {/* User Dashboard - all authenticated users */}
+=======
+          <Route path="/register" element={<RegisterPage />} />
+>>>>>>> develop
           <Route 
             path="/dashboard/user" 
             element={
