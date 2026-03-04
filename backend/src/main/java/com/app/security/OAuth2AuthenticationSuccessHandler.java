@@ -1,5 +1,9 @@
 package com.app.security;
 
+<<<<<<< HEAD
+import com.app.service.OAuthUserService;
+=======
+>>>>>>> develop
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +19,25 @@ import java.io.IOException;
 @Component
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+<<<<<<< HEAD
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException, ServletException {
+        String token = tokenProvider.generateToken(authentication);
+
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
+                .queryParam("token", token)
+                .build().toUriString();
+
+        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+=======
     @Autowired
     private JwtTokenProvider tokenProvider;
 
@@ -40,5 +63,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Authentication success handling failed");
         }
+>>>>>>> develop
     }
 }

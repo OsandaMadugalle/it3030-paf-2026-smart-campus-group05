@@ -18,7 +18,13 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     private String frontendUrl;
 
     @Override
+<<<<<<< HEAD
+    public void onAuthenticationFailure(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        AuthenticationException exception) throws IOException, ServletException {
+=======
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+>>>>>>> develop
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/login")
                 .queryParam("error", exception.getLocalizedMessage())
                 .build().toUriString();

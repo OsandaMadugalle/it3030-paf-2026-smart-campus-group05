@@ -1,5 +1,15 @@
 package com.app.controller;
 
+<<<<<<< HEAD
+import com.app.dto.UserResponse;
+import com.app.model.User;
+import com.app.security.UserPrincipal;
+import com.app.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+=======
 import com.app.model.User;
 import com.app.repository.UserRepository;
 import com.app.security.UserPrincipal;
@@ -11,11 +21,24 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+>>>>>>> develop
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
+<<<<<<< HEAD
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return userService.getUserById(userPrincipal.getId())
+                .map(user -> ResponseEntity.ok(new UserResponse(user)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+}
+=======
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
@@ -41,3 +64,4 @@ public class UserController {
                 });
     }
 }
+>>>>>>> develop
