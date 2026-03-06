@@ -1,87 +1,1007 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useRole } from '../hooks/useRole';
+import Sidebar from '../components/Sidebar';
+import StatCard from '../components/StatCard';
+import StatusBadge from '../components/StatusBadge';
+import FacilityCard from '../components/FacilityCard';
+import RequestTable from '../components/RequestTable';
+import ActivityFeed from '../components/ActivityFeed';
+import CSSBarChart from '../components/CSSBarChart';
+import CSSPieChart from '../components/CSSPieChart';
+import Modal from '../components/Modal';
+import EmptyState from '../components/EmptyState';
+import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
+import { showToast } from '../components/Toast';
 
 const ModeratorDashboard = () => {
-  const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
+  const { getUserInfo } = useRole();
+  const userInfo = getUserInfo();
+  
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Data states
+  const [facilities, setFacilities] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [activities, setActivities] = useState([]);
+  
+  // Stats
+  const [stats, setStats] = useState({
+    totalFacilities: 0,
+    activeFacilities: 0,
+    pendingRequests: 0,
+    todayApprovals: 0,
+    maintenanceCount: 0,
+    usersOnline: 0,
+  });
+  
+  // Campus Monitor states
+  const [facilityTypeFilter, setFacilityTypeFilter] = useState('');
+  const [facilityStatusFilter, setFacilityStatusFilter] = useState('');
+  
+  // Request states
+  const [requestSearch, setRequestSearch] = useState('');
+  const [requestStatusFilter, setRequestStatusFilter] = useState('pending');
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [requestAction, setRequestAction] = useState(null);
+  const [actionNotes, setActionNotes] = useState('');
+  const [requestPage, setRequestPage] = useState(1);
+  
+  // Notification states
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationTarget, setNotificationTarget] = useState('all');
+  const [notificationType, setNotificationType] = useState('info');
+  const [sentNotifications, setSentNotifications] = useState([]);
+  
+  // Report states
+  const [reportDateRange, setReportDateRange] = useState('week');
+  
+  // Loading states
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await api.get('/moderator/users');
-        setUsers(response.data);
-      } catch (err) {
-        setError('Failed to fetch users');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: 'home' },
+    { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
+    { id: 'requests', label: 'Facility Requests', icon: 'file' },
+    { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
+    { id: 'reports', label: 'Reports', icon: 'chart' },
+  ];
 
-    fetchUsers();
+  // Fetch all data
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [facilitiesRes, requestsRes, usersRes] = await Promise.all([
+        api.get('/facilities').catch(() => ({ data: [] })),
+        api.get('/requests').catch(() => ({ data: [] })),
+        api.get('/moderator/users').catch(() => ({ data: [] })),
+      ]);
+      
+      setFacilities(facilitiesRes.data || []);
+      setRequests(requestsRes.data || []);
+      setUsers(usersRes.data || []);
+      
+      // Calculate stats
+      const today = new Date().toDateString();
+      const facilitiesData = facilitiesRes.data || [];
+      const requestsData = requestsRes.data || [];
+      
+      setStats({
+        totalFacilities: facilitiesData.length,
+        activeFacilities: facilitiesData.filter(f => f.status?.toLowerCase() === 'active').length,
+        pendingRequests: requestsData.filter(r => r.status?.toLowerCase() === 'pending').length,
+        todayApprovals: requestsData.filter(r => 
+          r.status?.toLowerCase() === 'approved' && 
+          new Date(r.updatedAt).toDateString() === today
+        ).length,
+        maintenanceCount: facilitiesData.filter(f => f.status?.toLowerCase() === 'maintenance').length,
+        usersOnline: Math.floor(Math.random() * 50) + 10, // Mock data
+      });
+      
+      // Generate mock activities
+      setActivities([
+        { id: 1, user: { name: 'Alex Chen' }, action: 'requested', target: 'Conference Room A', timestamp: new Date(Date.now() - 300000) },
+        { id: 2, user: { name: 'Maria Garcia' }, action: 'booked', target: 'Lab 201', timestamp: new Date(Date.now() - 600000) },
+        { id: 3, user: { name: 'James Wilson' }, action: 'cancelled booking for', target: 'Auditorium', timestamp: new Date(Date.now() - 1200000) },
+        { id: 4, user: { name: 'Sarah Johnson' }, action: 'requested', target: 'Sports Complex', timestamp: new Date(Date.now() - 1800000) },
+        { id: 5, user: { name: 'Michael Brown' }, action: 'updated', target: 'Library Meeting Room', timestamp: new Date(Date.now() - 3600000) },
+      ]);
+      
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      showToast('Failed to load data', 'error');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) return <div style={{ padding: '20px' }}>Loading...</div>;
-  if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  // Request handlers
+  const handleApproveRequest = (request) => {
+    setSelectedRequest(request);
+    setRequestAction('approve');
+    setActionNotes('');
+  };
+
+  const handleRejectRequest = (request) => {
+    setSelectedRequest(request);
+    setRequestAction('reject');
+    setActionNotes('');
+  };
+
+  const handleViewRequest = (request) => {
+    setSelectedRequest(request);
+    setRequestAction('view');
+  };
+
+  const confirmRequestAction = async () => {
+    if (!selectedRequest || !requestAction) return;
+    if (requestAction === 'view') {
+      setSelectedRequest(null);
+      setRequestAction(null);
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      const endpoint = requestAction === 'approve' 
+        ? `/requests/${selectedRequest.id}/approve`
+        : `/requests/${selectedRequest.id}/reject`;
+      
+      await api.put(endpoint, { notes: actionNotes });
+      showToast(`Request ${requestAction}d successfully`, 'success');
+      setSelectedRequest(null);
+      setRequestAction(null);
+      setActionNotes('');
+      fetchData();
+    } catch (err) {
+      showToast(`Failed to ${requestAction} request`, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Notification handlers
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notificationTitle.trim() || !notificationMessage.trim()) {
+      showToast('Please fill in all required fields', 'warning');
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      await api.post('/notifications', {
+        title: notificationTitle,
+        message: notificationMessage,
+        target: notificationTarget,
+        type: notificationType,
+      });
+      showToast('Notification sent successfully', 'success');
+      setSentNotifications(prev => [{
+        id: Date.now(),
+        title: notificationTitle,
+        message: notificationMessage,
+        target: notificationTarget,
+        type: notificationType,
+        sentAt: new Date().toISOString(),
+        sentBy: userInfo?.name || 'Moderator',
+      }, ...prev]);
+      setNotificationTitle('');
+      setNotificationMessage('');
+      setNotificationTarget('all');
+      setNotificationType('info');
+    } catch (err) {
+      showToast('Failed to send notification', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Filtered data
+  const filteredFacilities = facilities.filter(f => {
+    const matchesType = !facilityTypeFilter || f.type?.toLowerCase() === facilityTypeFilter.toLowerCase();
+    const matchesStatus = !facilityStatusFilter || f.status?.toLowerCase() === facilityStatusFilter.toLowerCase();
+    return matchesType && matchesStatus;
+  });
+
+  const filteredRequests = requests.filter(r => {
+    const matchesSearch = !requestSearch || 
+      r.user?.name?.toLowerCase().includes(requestSearch.toLowerCase()) ||
+      r.facility?.name?.toLowerCase().includes(requestSearch.toLowerCase());
+    const matchesStatus = !requestStatusFilter || r.status?.toLowerCase() === requestStatusFilter.toLowerCase();
+    return matchesSearch && matchesStatus;
+  });
+
+  // Report data
+  const requestsByFacility = facilities.map(f => ({
+    label: f.name?.length > 15 ? f.name.substring(0, 15) + '...' : f.name,
+    value: requests.filter(r => r.facility?.id === f.id).length,
+    color: '#2563EB',
+  })).filter(d => d.value > 0).slice(0, 6);
+
+  const requestsByStatus = [
+    { label: 'Pending', value: requests.filter(r => r.status?.toLowerCase() === 'pending').length, color: '#F59E0B' },
+    { label: 'Approved', value: requests.filter(r => r.status?.toLowerCase() === 'approved').length, color: '#10B981' },
+    { label: 'Rejected', value: requests.filter(r => r.status?.toLowerCase() === 'rejected').length, color: '#EF4444' },
+  ];
+
+  const facilityUsageData = facilities.slice(0, 5).map(f => ({
+    label: f.name?.length > 12 ? f.name.substring(0, 12) + '...' : f.name,
+    value: Math.floor(Math.random() * 100), // Mock usage percentage
+    color: f.status?.toLowerCase() === 'active' ? '#10B981' : '#F59E0B',
+  }));
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const styles = {
+    layout: {
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: '#F8FAFC',
+      fontFamily: "'Inter', sans-serif",
+    },
+    main: {
+      flex: 1,
+      marginLeft: '260px',
+      padding: '32px',
+      maxWidth: 'calc(100% - 260px)',
+    },
+    header: {
+      marginBottom: '32px',
+    },
+    greeting: {
+      fontSize: '28px',
+      fontWeight: '700',
+      color: '#0F172A',
+      marginBottom: '8px',
+    },
+    subtitle: {
+      fontSize: '14px',
+      color: '#64748B',
+    },
+    statsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+      gap: '20px',
+      marginBottom: '32px',
+    },
+    section: {
+      marginBottom: '32px',
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#0F172A',
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    card: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: '12px',
+      border: '1px solid #E2E8F0',
+      padding: '24px',
+    },
+    filterBar: {
+      display: 'flex',
+      gap: '12px',
+      marginBottom: '20px',
+      flexWrap: 'wrap',
+    },
+    searchInput: {
+      flex: 1,
+      minWidth: '200px',
+      padding: '10px 14px 10px 40px',
+      fontSize: '14px',
+      border: '1px solid #E2E8F0',
+      borderRadius: '8px',
+      outline: 'none',
+      fontFamily: "'Inter', sans-serif",
+    },
+    searchWrapper: {
+      position: 'relative',
+      flex: 1,
+      minWidth: '200px',
+    },
+    searchIcon: {
+      position: 'absolute',
+      left: '12px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#94A3B8',
+    },
+    select: {
+      padding: '10px 14px',
+      fontSize: '14px',
+      border: '1px solid #E2E8F0',
+      borderRadius: '8px',
+      outline: 'none',
+      fontFamily: "'Inter', sans-serif",
+      backgroundColor: '#FFFFFF',
+      cursor: 'pointer',
+      minWidth: '150px',
+    },
+    facilitiesGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+      gap: '20px',
+    },
+    form: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    },
+    formRow: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '16px',
+    },
+    formGroup: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+    },
+    label: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#0F172A',
+    },
+    input: {
+      padding: '10px 14px',
+      fontSize: '14px',
+      border: '1px solid #E2E8F0',
+      borderRadius: '8px',
+      outline: 'none',
+      fontFamily: "'Inter', sans-serif",
+    },
+    textarea: {
+      padding: '10px 14px',
+      fontSize: '14px',
+      border: '1px solid #E2E8F0',
+      borderRadius: '8px',
+      outline: 'none',
+      fontFamily: "'Inter', sans-serif",
+      minHeight: '100px',
+      resize: 'vertical',
+    },
+    submitBtn: {
+      padding: '12px 24px',
+      backgroundColor: '#2563EB',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: '#FFFFFF',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      alignSelf: 'flex-start',
+    },
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse',
+    },
+    th: {
+      padding: '12px 16px',
+      textAlign: 'left',
+      fontSize: '12px',
+      fontWeight: '600',
+      color: '#64748B',
+      textTransform: 'uppercase',
+      borderBottom: '1px solid #E2E8F0',
+      backgroundColor: '#F8FAFC',
+    },
+    td: {
+      padding: '14px 16px',
+      fontSize: '14px',
+      color: '#0F172A',
+      borderBottom: '1px solid #F1F5F9',
+    },
+    chartsGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+      gap: '24px',
+    },
+    twoColGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '24px',
+    },
+    pagination: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '8px',
+      marginTop: '20px',
+    },
+    pageBtn: (active) => ({
+      padding: '8px 12px',
+      backgroundColor: active ? '#2563EB' : '#FFFFFF',
+      color: active ? '#FFFFFF' : '#64748B',
+      border: '1px solid #E2E8F0',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '14px',
+    }),
+    statusIndicator: (status) => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+    }),
+    statusDot: (status) => ({
+      width: '10px',
+      height: '10px',
+      borderRadius: '50%',
+      backgroundColor: status === 'active' ? '#10B981' : status === 'maintenance' ? '#F59E0B' : '#EF4444',
+      animation: status === 'active' ? 'pulse 2s infinite' : 'none',
+    }),
+    liveIndicator: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '12px',
+      color: '#10B981',
+      fontWeight: '600',
+    },
+    liveDot: {
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      backgroundColor: '#10B981',
+      animation: 'pulse 1.5s infinite',
+    },
+  };
+
+  // Render Overview Tab
+  const renderOverview = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>{getGreeting()}, {userInfo?.name?.split(' ')[0] || 'Moderator'}!</h1>
+        <p style={styles.subtitle}>Here's an overview of campus operations.</p>
+      </div>
+
+      <div style={styles.statsGrid}>
+        <StatCard title="Total Facilities" value={stats.totalFacilities} icon="building" color="#2563EB" />
+        <StatCard title="Active" value={stats.activeFacilities} icon="check" color="#10B981" />
+        <StatCard title="Under Maintenance" value={stats.maintenanceCount} icon="tool" color="#F59E0B" />
+        <StatCard title="Pending Requests" value={stats.pendingRequests} icon="clock" color="#EF4444" />
+        <StatCard title="Today's Approvals" value={stats.todayApprovals} icon="check-circle" color="#10B981" />
+        <StatCard title="Users Online" value={stats.usersOnline} icon="users" color="#8B5CF6" />
+      </div>
+
+      <div style={styles.twoColGrid}>
+        <div style={styles.section}>
+          <h3 style={styles.sectionTitle}>
+            Recent Activity
+            <span style={styles.liveIndicator}>
+              <span style={styles.liveDot}></span>
+              Live
+            </span>
+          </h3>
+          <ActivityFeed activities={activities} maxItems={5} autoRefresh={30000} />
+        </div>
+
+        <div style={styles.section}>
+          <h3 style={styles.sectionTitle}>Quick Actions</h3>
+          <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              style={{ padding: '12px 20px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '14px', fontWeight: '500', color: '#0F172A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setActiveTab('requests')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Review Pending Requests ({stats.pendingRequests})
+            </button>
+            <button
+              style={{ padding: '12px 20px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '14px', fontWeight: '500', color: '#0F172A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setActiveTab('monitor')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Open Campus Monitor
+            </button>
+            <button
+              style={{ padding: '12px 20px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '14px', fontWeight: '500', color: '#0F172A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setActiveTab('notifications')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
+              Send Notification
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>Facility Status Overview</h3>
+        <div style={styles.facilitiesGrid}>
+          {facilities.slice(0, 4).map(facility => (
+            <div key={facility.id} style={{ ...styles.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '500', marginBottom: '4px' }}>{facility.name}</p>
+                <p style={{ fontSize: '13px', color: '#64748B' }}>{facility.type || 'Facility'}</p>
+              </div>
+              <StatusBadge status={facility.status} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  // Render Campus Monitor Tab
+  const renderMonitor = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Campus Monitor</h1>
+        <p style={styles.subtitle}>Real-time overview of all campus facilities.</p>
+      </div>
+
+      <div style={styles.filterBar}>
+        <select
+          value={facilityTypeFilter}
+          onChange={(e) => setFacilityTypeFilter(e.target.value)}
+          style={styles.select}
+        >
+          <option value="">All Types</option>
+          <option value="hall">Hall</option>
+          <option value="lab">Laboratory</option>
+          <option value="sports">Sports</option>
+          <option value="library">Library</option>
+          <option value="cafeteria">Cafeteria</option>
+          <option value="parking">Parking</option>
+        </select>
+        <select
+          value={facilityStatusFilter}
+          onChange={(e) => setFacilityStatusFilter(e.target.value)}
+          style={styles.select}
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="closed">Closed</option>
+        </select>
+        <div style={{ marginLeft: 'auto', ...styles.liveIndicator }}>
+          <span style={styles.liveDot}></span>
+          Live Status
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ ...styles.card, textAlign: 'center' }}>
+          <p style={{ fontSize: '32px', fontWeight: '700', color: '#10B981' }}>{stats.activeFacilities}</p>
+          <p style={{ color: '#64748B', fontSize: '13px' }}>Active Facilities</p>
+        </div>
+        <div style={{ ...styles.card, textAlign: 'center' }}>
+          <p style={{ fontSize: '32px', fontWeight: '700', color: '#F59E0B' }}>{stats.maintenanceCount}</p>
+          <p style={{ color: '#64748B', fontSize: '13px' }}>Under Maintenance</p>
+        </div>
+        <div style={{ ...styles.card, textAlign: 'center' }}>
+          <p style={{ fontSize: '32px', fontWeight: '700', color: '#EF4444' }}>{facilities.filter(f => f.status?.toLowerCase() === 'closed').length}</p>
+          <p style={{ color: '#64748B', fontSize: '13px' }}>Closed</p>
+        </div>
+      </div>
+
+      {filteredFacilities.length === 0 ? (
+        <EmptyState
+          icon="building"
+          title="No facilities found"
+          message="No facilities match your filter criteria."
+        />
+      ) : (
+        <div style={styles.facilitiesGrid}>
+          {filteredFacilities.map(facility => (
+            <FacilityCard
+              key={facility.id}
+              facility={facility}
+              showActions={false}
+            />
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+      `}</style>
+    </>
+  );
+
+  // Render Requests Tab
+  const renderRequests = () => {
+    const pageSize = 10;
+    const totalPages = Math.ceil(filteredRequests.length / pageSize);
+    const paginatedRequests = filteredRequests.slice((requestPage - 1) * pageSize, requestPage * pageSize);
+
+    return (
+      <>
+        <div style={styles.header}>
+          <h1 style={styles.greeting}>Facility Requests</h1>
+          <p style={styles.subtitle}>Review and manage facility booking requests.</p>
+        </div>
+
+        <div style={styles.statsGrid}>
+          <StatCard title="Pending" value={requests.filter(r => r.status?.toLowerCase() === 'pending').length} icon="clock" color="#F59E0B" />
+          <StatCard title="Approved" value={requests.filter(r => r.status?.toLowerCase() === 'approved').length} icon="check" color="#10B981" />
+          <StatCard title="Rejected" value={requests.filter(r => r.status?.toLowerCase() === 'rejected').length} icon="x" color="#EF4444" />
+          <StatCard title="Total" value={requests.length} icon="file" color="#2563EB" />
+        </div>
+
+        <div style={styles.filterBar}>
+          <div style={styles.searchWrapper}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={styles.searchIcon}>
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by user or facility..."
+              value={requestSearch}
+              onChange={(e) => setRequestSearch(e.target.value)}
+              style={styles.searchInput}
+            />
+          </div>
+          <select
+            value={requestStatusFilter}
+            onChange={(e) => setRequestStatusFilter(e.target.value)}
+            style={styles.select}
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <RequestTable
+          requests={paginatedRequests}
+          onApprove={handleApproveRequest}
+          onReject={handleRejectRequest}
+          onView={handleViewRequest}
+          loading={loading}
+        />
+
+        {totalPages > 1 && (
+          <div style={styles.pagination}>
+            <button
+              style={styles.pageBtn(false)}
+              onClick={() => setRequestPage(p => Math.max(1, p - 1))}
+              disabled={requestPage === 1}
+            >
+              ←
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                style={styles.pageBtn(requestPage === i + 1)}
+                onClick={() => setRequestPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              style={styles.pageBtn(false)}
+              onClick={() => setRequestPage(p => Math.min(totalPages, p + 1))}
+              disabled={requestPage === totalPages}
+            >
+              →
+            </button>
+          </div>
+        )}
+
+        {/* Request Action Modal */}
+        <Modal
+          isOpen={!!selectedRequest && requestAction}
+          onClose={() => { setSelectedRequest(null); setRequestAction(null); }}
+          title={requestAction === 'view' ? 'Request Details' : 
+                 requestAction === 'approve' ? 'Approve Request' : 'Reject Request'}
+          size="md"
+        >
+          {selectedRequest && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>User</label>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.user?.name || 'Unknown'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Email</label>
+                  <p>{selectedRequest.user?.email || '-'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Facility</label>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.facility?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Current Status</label>
+                  <StatusBadge status={selectedRequest.status} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Purpose</label>
+                  <p>{selectedRequest.purpose || '-'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Preferred Date</label>
+                  <p>{selectedRequest.preferredDate ? new Date(selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Time Slot</label>
+                  <p>{selectedRequest.timeSlot || '-'}</p>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Submitted</label>
+                  <p>{selectedRequest.createdAt ? new Date(selectedRequest.createdAt).toLocaleString() : '-'}</p>
+                </div>
+              </div>
+              
+              {selectedRequest.additionalNotes && (
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Additional Notes</label>
+                  <p style={{ backgroundColor: '#F8FAFC', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
+                    {selectedRequest.additionalNotes}
+                  </p>
+                </div>
+              )}
+              
+              {requestAction !== 'view' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    {requestAction === 'approve' ? 'Notes (optional)' : 'Rejection Reason'}
+                    {requestAction === 'reject' && <span style={{ color: '#EF4444' }}> *</span>}
+                  </label>
+                  <textarea
+                    value={actionNotes}
+                    onChange={(e) => setActionNotes(e.target.value)}
+                    placeholder={requestAction === 'approve' ? 'Add any notes for the user...' : 'Please provide a reason for rejection...'}
+                    style={styles.textarea}
+                    required={requestAction === 'reject'}
+                  />
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button
+                  style={{ ...styles.submitBtn, backgroundColor: '#F1F5F9', color: '#64748B' }}
+                  onClick={() => { setSelectedRequest(null); setRequestAction(null); }}
+                >
+                  {requestAction === 'view' ? 'Close' : 'Cancel'}
+                </button>
+                {requestAction !== 'view' && (
+                  <button
+                    style={{ 
+                      ...styles.submitBtn, 
+                      backgroundColor: requestAction === 'approve' ? '#10B981' : '#EF4444',
+                      opacity: actionLoading ? 0.7 : 1,
+                    }}
+                    onClick={confirmRequestAction}
+                    disabled={actionLoading || (requestAction === 'reject' && !actionNotes.trim())}
+                  >
+                    {actionLoading ? 'Processing...' : requestAction === 'approve' ? 'Approve' : 'Reject'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal>
+      </>
+    );
+  };
+
+  // Render Notifications Tab
+  const renderNotifications = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Send Notifications</h1>
+        <p style={styles.subtitle}>Send notifications to campus users.</p>
+      </div>
+
+      <div style={styles.twoColGrid}>
+        <div style={styles.card}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Compose Notification</h3>
+          <form style={styles.form} onSubmit={handleSendNotification}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Title <span style={{ color: '#EF4444' }}>*</span></label>
+              <input
+                type="text"
+                value={notificationTitle}
+                onChange={(e) => setNotificationTitle(e.target.value)}
+                placeholder="Notification title"
+                style={styles.input}
+                required
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Message <span style={{ color: '#EF4444' }}>*</span></label>
+              <textarea
+                value={notificationMessage}
+                onChange={(e) => setNotificationMessage(e.target.value)}
+                placeholder="Write your notification message..."
+                style={styles.textarea}
+                required
+                maxLength={500}
+              />
+              <span style={{ fontSize: '12px', color: '#94A3B8' }}>{notificationMessage.length}/500 characters</span>
+            </div>
+            <div style={styles.formRow}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Target Audience</label>
+                <select
+                  value={notificationTarget}
+                  onChange={(e) => setNotificationTarget(e.target.value)}
+                  style={styles.select}
+                >
+                  <option value="all">All Users</option>
+                  <option value="ROLE_USER">Students/Staff Only</option>
+                </select>
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Type</label>
+                <select
+                  value={notificationType}
+                  onChange={(e) => setNotificationType(e.target.value)}
+                  style={styles.select}
+                >
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="alert">Alert</option>
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit"
+              style={{ ...styles.submitBtn, opacity: actionLoading ? 0.7 : 1 }}
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Sending...' : 'Send Notification'}
+            </button>
+          </form>
+        </div>
+
+        <div style={styles.card}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Recently Sent</h3>
+          {sentNotifications.length === 0 ? (
+            <EmptyState icon="bell" title="No notifications sent" message="Notifications you send will appear here." />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {sentNotifications.slice(0, 5).map((notif, index) => (
+                <div key={notif.id || index} style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', borderLeft: '3px solid #2563EB' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <p style={{ fontWeight: '500', fontSize: '14px' }}>{notif.title}</p>
+                    <StatusBadge status={notif.type || 'info'} size="sm" />
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>{notif.message}</p>
+                  <p style={{ fontSize: '11px', color: '#94A3B8' }}>
+                    Sent to {notif.target === 'all' ? 'All Users' : notif.target} • {new Date(notif.sentAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  // Render Reports Tab
+  const renderReports = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Reports</h1>
+        <p style={styles.subtitle}>Facility usage and request statistics.</p>
+      </div>
+
+      <div style={styles.filterBar}>
+        <select
+          value={reportDateRange}
+          onChange={(e) => setReportDateRange(e.target.value)}
+          style={styles.select}
+        >
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+
+      <div style={styles.statsGrid}>
+        <StatCard title="Total Requests" value={requests.length} icon="file" color="#2563EB" />
+        <StatCard 
+          title="Approval Rate" 
+          value={`${requests.length > 0 ? Math.round((requests.filter(r => r.status?.toLowerCase() === 'approved').length / requests.length) * 100) : 0}%`} 
+          icon="percent" 
+          color="#10B981" 
+        />
+        <StatCard 
+          title="Avg Response Time" 
+          value="2.5h" 
+          icon="clock" 
+          color="#F59E0B" 
+        />
+        <StatCard title="Active Facilities" value={stats.activeFacilities} icon="building" color="#8B5CF6" />
+      </div>
+
+      <div style={styles.chartsGrid}>
+        <CSSBarChart
+          title="Requests by Facility"
+          data={requestsByFacility.length > 0 ? requestsByFacility : [{ label: 'No data', value: 0, color: '#E2E8F0' }]}
+          horizontal={true}
+        />
+        <CSSPieChart
+          title="Request Status Distribution"
+          data={requestsByStatus}
+          size={180}
+        />
+      </div>
+
+      <div style={{ marginTop: '24px' }}>
+        <CSSBarChart
+          title="Facility Usage (%)"
+          data={facilityUsageData.length > 0 ? facilityUsageData : [{ label: 'No data', value: 0, color: '#E2E8F0' }]}
+          horizontal={false}
+          maxHeight={250}
+        />
+      </div>
+    </>
+  );
+
+  const renderContent = () => {
+    if (loading && activeTab === 'overview') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} height="100px" />)}
+        </div>
+      );
+    }
+
+    switch (activeTab) {
+      case 'overview': return renderOverview();
+      case 'monitor': return renderMonitor();
+      case 'requests': return renderRequests();
+      case 'notifications': return renderNotifications();
+      case 'reports': return renderReports();
+      default: return renderOverview();
+    }
+  };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-      <h1>Moderator Dashboard</h1>
-      <p style={{ color: '#666' }}>View all registered users (read-only)</p>
-
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f8f9fa' }}>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Avatar</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Name</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Email</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Roles</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Provider</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-              <td style={{ padding: '12px' }}>
-                {user.avatarUrl && (
-                  <img 
-                    src={user.avatarUrl} 
-                    alt={user.name} 
-                    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                  />
-                )}
-              </td>
-              <td style={{ padding: '12px' }}>{user.name}</td>
-              <td style={{ padding: '12px' }}>{user.email}</td>
-              <td style={{ padding: '12px' }}>
-                {user.roles.map((role, index) => (
-                  <span 
-                    key={index}
-                    style={{
-                      display: 'inline-block',
-                      backgroundColor: role === 'ROLE_ADMIN' ? '#dc3545' : 
-                                       role === 'ROLE_MODERATOR' ? '#ffc107' : '#28a745',
-                      color: role === 'ROLE_MODERATOR' ? '#000' : '#fff',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      marginRight: '4px',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {role.replace('ROLE_', '')}
-                  </span>
-                ))}
-              </td>
-              <td style={{ padding: '12px' }}>{user.provider}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {users.length === 0 && (
-        <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No users found</p>
-      )}
+    <div style={styles.layout}>
+      <Sidebar
+        navItems={navItems}
+        userInfo={userInfo}
+        onLogout={handleLogout}
+        activeItem={activeTab}
+        onNavClick={setActiveTab}
+      />
+      <main style={styles.main}>
+        {renderContent()}
+      </main>
     </div>
   );
 };

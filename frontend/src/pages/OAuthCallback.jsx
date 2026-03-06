@@ -1,6 +1,39 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+// Decode JWT token to get roles
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+};
+
+// Determine dashboard based on role hierarchy: Admin > Moderator > User
+const getDashboardPath = (roles) => {
+  if (!roles || roles.length === 0) return '/dashboard/user';
+  
+  const roleList = typeof roles === 'string' ? roles.split(',') : roles;
+  
+  if (roleList.includes('ROLE_ADMIN')) {
+    return '/dashboard/admin';
+  }
+  if (roleList.includes('ROLE_MODERATOR')) {
+    return '/dashboard/moderator';
+  }
+  return '/dashboard/user';
+};
+
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -16,7 +49,15 @@ const OAuthCallback = () => {
 
     if (token) {
       localStorage.setItem('token', token);
-      navigate('/dashboard/user');
+      
+      // Decode token to get roles and redirect to correct dashboard
+      const decoded = decodeToken(token);
+      const dashboardPath = getDashboardPath(decoded?.roles);
+      
+      console.log('User roles:', decoded?.roles);
+      console.log('Navigating to:', dashboardPath);
+      
+      navigate(dashboardPath);
     } else {
       navigate('/login?error=No token received');
     }
