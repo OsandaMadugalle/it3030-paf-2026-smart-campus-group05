@@ -1,9 +1,11 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useWindowSize';
 
 const Login = () => {
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
+  const isMobile = useIsMobile();
 
   const googleLogin = () => {
     window.location.href = 'http://localhost:8081/oauth2/authorization/google';
@@ -17,13 +19,13 @@ const Login = () => {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: "'Inter', sans-serif",
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
     },
     card: {
       backgroundColor: '#FFFFFF',
       borderRadius: '16px',
       boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
-      padding: '48px',
+      padding: isMobile ? '32px 24px' : '48px',
       width: '100%',
       maxWidth: '420px',
       textAlign: 'center',

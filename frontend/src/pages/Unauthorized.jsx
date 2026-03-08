@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useWindowSize';
 
 const Unauthorized = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const styles = {
     container: {
@@ -12,15 +14,16 @@ const Unauthorized = () => {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: "'Inter', sans-serif",
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
     },
     content: {
       textAlign: 'center',
       maxWidth: '400px',
+      width: '100%',
     },
     iconContainer: {
-      width: '120px',
-      height: '120px',
+      width: isMobile ? '100px' : '120px',
+      height: isMobile ? '100px' : '120px',
       borderRadius: '50%',
       backgroundColor: '#FEE2E2',
       display: 'flex',
@@ -29,29 +32,30 @@ const Unauthorized = () => {
       margin: '0 auto 32px',
     },
     lockIcon: {
-      width: '60px',
-      height: '60px',
+      width: isMobile ? '48px' : '60px',
+      height: isMobile ? '48px' : '60px',
       position: 'relative',
     },
     title: {
-      fontSize: '32px',
+      fontSize: isMobile ? '24px' : '32px',
       fontWeight: '700',
       color: '#0F172A',
       marginBottom: '12px',
     },
     subtitle: {
-      fontSize: '16px',
+      fontSize: isMobile ? '14px' : '16px',
       color: '#64748B',
       marginBottom: '40px',
       lineHeight: '1.6',
     },
     buttonGroup: {
       display: 'flex',
-      gap: '16px',
+      gap: isMobile ? '12px' : '16px',
       justifyContent: 'center',
+      flexDirection: isMobile ? 'column' : 'row',
     },
     button: {
-      padding: '14px 28px',
+      padding: isMobile ? '12px 24px' : '14px 28px',
       borderRadius: '12px',
       fontSize: '14px',
       fontWeight: '600',

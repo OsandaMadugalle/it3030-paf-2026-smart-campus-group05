@@ -1,6 +1,5 @@
 package com.app.security;
 
-import com.app.model.Role;
 import com.app.model.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

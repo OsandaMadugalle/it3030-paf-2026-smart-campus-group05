@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
+import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
@@ -19,7 +20,9 @@ const ModeratorDashboard = () => {
   const navigate = useNavigate();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
+  const isMobile = useIsMobile();
   
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   
@@ -261,15 +264,16 @@ const ModeratorDashboard = () => {
     },
     main: {
       flex: 1,
-      marginLeft: '260px',
-      padding: '32px',
-      maxWidth: 'calc(100% - 260px)',
+      marginLeft: isMobile ? 0 : '260px',
+      padding: isMobile ? '80px 16px 24px 16px' : '32px',
+      maxWidth: isMobile ? '100%' : 'calc(100% - 260px)',
+      transition: 'margin-left 0.3s ease, padding 0.3s ease',
     },
     header: {
       marginBottom: '32px',
     },
     greeting: {
-      fontSize: '28px',
+      fontSize: isMobile ? '22px' : '28px',
       fontWeight: '700',
       color: '#0F172A',
       marginBottom: '8px',
@@ -280,8 +284,8 @@ const ModeratorDashboard = () => {
     },
     statsGrid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-      gap: '20px',
+      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(160px, 1fr))',
+      gap: isMobile ? '12px' : '20px',
       marginBottom: '32px',
     },
     section: {
@@ -998,6 +1002,8 @@ const ModeratorDashboard = () => {
         onLogout={handleLogout}
         activeItem={activeTab}
         onNavClick={setActiveTab}
+        isOpen={sidebarOpen}
+        onToggle={setSidebarOpen}
       />
       <main style={styles.main}>
         {renderContent()}

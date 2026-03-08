@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useWindowSize';
 
 const LandingPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
+  const isMobile = useIsMobile();
 
   const googleLogin = () => {
     window.location.href = 'http://localhost:8081/oauth2/authorization/google';
@@ -19,7 +21,7 @@ const LandingPage = () => {
     navbar: {
       backgroundColor: '#FFFFFF',
       borderBottom: '1px solid #E2E8F0',
-      padding: '16px 48px',
+      padding: isMobile ? '12px 16px' : '16px 48px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -35,8 +37,8 @@ const LandingPage = () => {
       gap: '12px',
     },
     logoIcon: {
-      width: '40px',
-      height: '40px',
+      width: isMobile ? '36px' : '40px',
+      height: isMobile ? '36px' : '40px',
       borderRadius: '10px',
       backgroundColor: '#2563EB',
       display: 'flex',
@@ -45,14 +47,14 @@ const LandingPage = () => {
     },
     logoText: {
       color: '#0F172A',
-      fontSize: '20px',
+      fontSize: isMobile ? '16px' : '20px',
       fontWeight: '700',
     },
     loginBtn: {
       backgroundColor: '#2563EB',
       color: '#FFFFFF',
       border: 'none',
-      padding: '12px 24px',
+      padding: isMobile ? '10px 16px' : '12px 24px',
       borderRadius: '8px',
       fontSize: '14px',
       fontWeight: '600',
@@ -60,8 +62,8 @@ const LandingPage = () => {
       transition: 'all 0.2s ease',
     },
     hero: {
-      paddingTop: '160px',
-      paddingBottom: '100px',
+      paddingTop: isMobile ? '100px' : '160px',
+      paddingBottom: isMobile ? '60px' : '100px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -74,8 +76,8 @@ const LandingPage = () => {
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: '800px',
-      height: '800px',
+      width: isMobile ? '400px' : '800px',
+      height: isMobile ? '400px' : '800px',
       background: 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
       zIndex: 0,
     },
@@ -83,13 +85,13 @@ const LandingPage = () => {
       position: 'relative',
       zIndex: 1,
       maxWidth: '700px',
-      padding: '0 24px',
+      padding: isMobile ? '0 16px' : '0 24px',
     },
     heroTitle: {
-      fontSize: '56px',
+      fontSize: isMobile ? '36px' : '56px',
       fontWeight: '800',
       color: '#0F172A',
-      marginBottom: '24px',
+      marginBottom: isMobile ? '16px' : '24px',
       lineHeight: '1.1',
     },
     heroTitleGradient: {
@@ -99,18 +101,18 @@ const LandingPage = () => {
       backgroundClip: 'text',
     },
     heroSubtitle: {
-      fontSize: '20px',
+      fontSize: isMobile ? '16px' : '20px',
       color: '#64748B',
-      marginBottom: '40px',
+      marginBottom: isMobile ? '32px' : '40px',
       lineHeight: '1.6',
     },
     heroCta: {
       backgroundColor: '#2563EB',
       color: '#FFFFFF',
       border: 'none',
-      padding: '16px 40px',
+      padding: isMobile ? '14px 32px' : '16px 40px',
       borderRadius: '12px',
-      fontSize: '16px',
+      fontSize: isMobile ? '15px' : '16px',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
@@ -118,49 +120,50 @@ const LandingPage = () => {
     },
     heroIllustration: {
       position: 'relative',
-      marginTop: '60px',
+      marginTop: isMobile ? '40px' : '60px',
       display: 'flex',
       justifyContent: 'center',
-      gap: '24px',
+      gap: isMobile ? '12px' : '24px',
+      flexWrap: 'wrap',
     },
     illustrationShape: {
-      width: '120px',
-      height: '120px',
-      borderRadius: '24px',
+      width: isMobile ? '80px' : '120px',
+      height: isMobile ? '80px' : '120px',
+      borderRadius: isMobile ? '16px' : '24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
     },
     features: {
       backgroundColor: '#FFFFFF',
-      padding: '100px 48px',
+      padding: isMobile ? '60px 16px' : '100px 48px',
     },
     featuresContainer: {
       maxWidth: '1200px',
       margin: '0 auto',
     },
     featuresTitle: {
-      fontSize: '36px',
+      fontSize: isMobile ? '28px' : '36px',
       fontWeight: '700',
       color: '#0F172A',
       textAlign: 'center',
       marginBottom: '16px',
     },
     featuresSubtitle: {
-      fontSize: '18px',
+      fontSize: isMobile ? '15px' : '18px',
       color: '#64748B',
       textAlign: 'center',
-      marginBottom: '60px',
+      marginBottom: isMobile ? '40px' : '60px',
     },
     featuresGrid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '32px',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
+      gap: isMobile ? '20px' : '32px',
     },
     featureCard: {
       backgroundColor: '#F8FAFC',
       borderRadius: '16px',
-      padding: '32px',
+      padding: isMobile ? '24px' : '32px',
       border: '1px solid #E2E8F0',
       transition: 'all 0.3s ease',
     },
@@ -186,7 +189,7 @@ const LandingPage = () => {
     },
     footer: {
       backgroundColor: '#0F172A',
-      padding: '32px 48px',
+      padding: isMobile ? '24px 16px' : '32px 48px',
       textAlign: 'center',
     },
     footerText: {
@@ -210,9 +213,10 @@ const LandingPage = () => {
     modal: {
       backgroundColor: '#FFFFFF',
       borderRadius: '16px',
-      padding: '40px',
+      padding: isMobile ? '32px 24px' : '40px',
       width: '100%',
       maxWidth: '420px',
+      margin: isMobile ? '0 16px' : '0',
       position: 'relative',
       boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
       animation: 'modalSlideIn 0.3s ease',

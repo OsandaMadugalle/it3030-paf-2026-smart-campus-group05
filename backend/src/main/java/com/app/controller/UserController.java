@@ -1,7 +1,6 @@
 package com.app.controller;
 
 import com.app.dto.UserResponse;
-import com.app.model.User;
 import com.app.security.UserPrincipal;
 import com.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
