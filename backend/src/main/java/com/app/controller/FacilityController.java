@@ -35,8 +35,12 @@ public class FacilityController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         // Only allow adminView=true if the caller actually has ADMIN role
-        boolean isAdmin = userDetails.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isAdmin = false;
+        if (userDetails != null && userDetails.getAuthorities() != null) {
+            isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        }
+        
         List<FacilityResponse> facilities = facilityService.getAllFacilities(adminView && isAdmin);
         return ResponseEntity.ok(facilities);
     }
