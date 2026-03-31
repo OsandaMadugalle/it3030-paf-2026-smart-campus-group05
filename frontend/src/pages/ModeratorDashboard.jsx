@@ -70,6 +70,7 @@ const ModeratorDashboard = () => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
+    { id: 'bookings', label: 'Bookings Management', icon: 'calendar' },
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
     { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
@@ -975,6 +976,12 @@ const ModeratorDashboard = () => {
     </>
   );
 
+  // Render Bookings Tab
+  const renderBookings = () => {
+    navigate('/admin/bookings');
+    return null;
+  };
+
   const renderContent = () => {
     if (loading && activeTab === 'overview') {
       return (
@@ -987,6 +994,7 @@ const ModeratorDashboard = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'monitor': return renderMonitor();
+      case 'bookings': return renderBookings();
       case 'requests': return renderRequests();
       case 'notifications': return renderNotifications();
       case 'reports': return renderReports();

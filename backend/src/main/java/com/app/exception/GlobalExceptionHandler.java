@@ -29,6 +29,54 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflictException(ConflictException ex) {
+        logger.warn("Conflict detected: {}", ex.getMessage());
+        
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", ex.getErrorCode());
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.CONFLICT.value());
+        
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleBookingNotFoundException(BookingNotFoundException ex) {
+        logger.warn("Booking not found: {}", ex.getMessage());
+        
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", ex.getErrorCode());
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedException(UnauthorizedException ex) {
+        logger.warn("Unauthorized access: {}", ex.getMessage());
+        
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", ex.getErrorCode());
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InvalidBookingStateException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidBookingStateException(InvalidBookingStateException ex) {
+        logger.warn("Invalid booking state: {}", ex.getMessage());
+        
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", ex.getErrorCode());
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
         logger.error("Unhandled Exception caught by GlobalExceptionHandler: ", ex);

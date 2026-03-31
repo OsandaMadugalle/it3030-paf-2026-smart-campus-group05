@@ -29,6 +29,12 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (activeTab === 'bookings') {
+      navigate('/admin/bookings');
+    }
+  }, [activeTab, navigate]);
   
   // Data states
   const [users, setUsers] = useState([]);
@@ -97,6 +103,7 @@ const AdminDashboard = () => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'facilities', label: 'Facilities Management', icon: 'building' },
+    { id: 'bookings', label: 'Bookings Management', icon: 'calendar' },
     { id: 'requests', label: 'Requests Overview', icon: 'file' },
     { id: 'users', label: 'Users & Roles', icon: 'users' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
@@ -756,7 +763,8 @@ const AdminDashboard = () => {
     </>
   );
 
-  // Render Facilities Tab
+  // Render Bookings Tab
+  const renderBookings = () => null;
   const renderFacilities = () => (
     <>
       <div style={styles.header}>
@@ -1649,6 +1657,7 @@ const AdminDashboard = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'facilities': return renderFacilities();
+      case 'bookings': return renderBookings();
       case 'requests': return renderRequests();
       case 'users': return renderUsers();
       case 'announcements': return renderAnnouncements();

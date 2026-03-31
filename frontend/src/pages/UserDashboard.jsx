@@ -25,7 +25,7 @@ const UserDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [loading, setLoading] = useState(true);
-  
+
   // Data states
   const [facilities, setFacilities] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
@@ -49,8 +49,9 @@ const UserDashboard = () => {
     attendeeCount: '',
     additionalNotes: '',
   });
+  const [showRequestForm, setShowRequestForm] = useState(false);
   
-  // My Requests states
+  // My Bookings states
   const [requestFilter, setRequestFilter] = useState('');
   const [requestToCancel, setRequestToCancel] = useState(null);
   
@@ -59,8 +60,7 @@ const UserDashboard = () => {
 
   const navItems = [
     { id: 'home', label: 'Home', icon: 'home' },
-    { id: 'submit', label: 'Submit Request', icon: 'plus' },
-    { id: 'requests', label: 'My Requests', icon: 'file' },
+    { id: 'requests', label: 'Bookings', icon: 'file' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
   ];
@@ -80,7 +80,7 @@ const UserDashboard = () => {
 
   const wizardSteps = [
     { id: 1, title: 'Select Facility' },
-    { id: 2, title: 'Request Details' },
+    { id: 2, title: 'Booking Details' },
     { id: 3, title: 'Review & Submit' },
   ];
 
@@ -182,10 +182,11 @@ const UserDashboard = () => {
         attendeeCount: '',
         additionalNotes: '',
       });
+      setShowRequestForm(false);
       setActiveTab('requests');
       fetchData();
     } catch (err) {
-      showToast('Failed to submit request', 'error');
+      showToast('Failed to submit booking', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -217,7 +218,7 @@ const UserDashboard = () => {
       setRequestToCancel(null);
       fetchData();
     } catch (err) {
-      showToast('Failed to cancel request', 'error');
+      showToast('Failed to cancel booking', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -481,7 +482,7 @@ const UserDashboard = () => {
       </div>
 
       <div style={styles.statsGrid}>
-        <StatCard title="Total Requests" value={stats.totalRequests} icon="file" color="#2563EB" />
+        <StatCard title="Total Bookings" value={stats.totalRequests} icon="file" color="#2563EB" />
         <StatCard title="Pending" value={stats.pendingRequests} icon="clock" color="#F59E0B" />
         <StatCard title="Approved" value={stats.approvedRequests} icon="check" color="#10B981" />
         <StatCard title="Rejected" value={stats.rejectedRequests} icon="x" color="#EF4444" />
@@ -523,7 +524,12 @@ const UserDashboard = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div
               style={styles.quickActionCard}
-              onClick={() => setActiveTab('submit')}
+              onClick={() => {
+                setActiveTab('requests');
+                setShowRequestForm(true);
+                setWizardStep(1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               onMouseOver={(e) => {
                 e.currentTarget.style.borderColor = '#2563EB';
                 e.currentTarget.style.transform = 'translateY(-2px)';
@@ -545,7 +551,7 @@ const UserDashboard = () => {
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontWeight: '600', marginBottom: '2px' }}>Submit Facility Request</p>
+                  <p style={{ fontWeight: '600', marginBottom: '2px' }}>Submit Facility Booking</p>
                   <p style={{ fontSize: '13px', color: '#64748B' }}>Book a campus facility for your event</p>
                 </div>
               </div>
@@ -575,8 +581,8 @@ const UserDashboard = () => {
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontWeight: '600', marginBottom: '2px' }}>View My Requests</p>
-                  <p style={{ fontSize: '13px', color: '#64748B' }}>Track status of your facility requests</p>
+                  <p style={{ fontWeight: '600', marginBottom: '2px' }}>View My Bookings</p>
+                  <p style={{ fontSize: '13px', color: '#64748B' }}>Track status of your facility bookings</p>
                 </div>
               </div>
             </div>
@@ -584,11 +590,11 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Requests Summary */}
+      {/* Recent Bookings Summary */}
       {myRequests.length > 0 && (
         <div style={styles.section}>
           <h3 style={styles.sectionTitle}>
-            Recent Requests
+            Recent Bookings
             <button
               onClick={() => setActiveTab('requests')}
               style={{ ...styles.secondaryBtn, padding: '8px 16px', fontSize: '13px' }}
@@ -610,18 +616,12 @@ const UserDashboard = () => {
     </>
   );
 
-  // Render Submit Request Tab (3-step wizard)
+  // Render Submit Booking form
   const renderSubmitRequest = () => (
-    <>
-      <div style={styles.header}>
-        <h1 style={styles.greeting}>Submit Facility Request</h1>
-        <p style={styles.subtitle}>Follow the steps below to request a campus facility.</p>
-      </div>
+    <div style={styles.wizardContainer}>
+      <StepIndicator steps={wizardSteps} currentStep={wizardStep} />
 
-      <div style={styles.wizardContainer}>
-        <StepIndicator steps={wizardSteps} currentStep={wizardStep} />
-
-        <div style={styles.wizardContent}>
+      <div style={styles.wizardContent}>
           {/* Step 1: Select Facility */}
           {wizardStep === 1 && (
             <>
@@ -651,11 +651,11 @@ const UserDashboard = () => {
             </>
           )}
 
-          {/* Step 2: Request Details */}
+          {/* Step 2: Booking Details */}
           {wizardStep === 2 && (
             <>
               <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px' }}>
-                Request Details
+                Booking Details
               </h3>
               <div style={styles.card}>
                 <div style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -747,10 +747,10 @@ const UserDashboard = () => {
               <div style={styles.previewCard}>
                 <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                   </svg>
-                  Request Summary
+                  Booking Summary
                 </h4>
                 
                 <div style={styles.previewRow}>
@@ -829,84 +829,92 @@ const UserDashboard = () => {
                   style={{ ...styles.submitBtn, backgroundColor: '#10B981' }}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Submitting...' : 'Submit Request'}
+                  {actionLoading ? 'Submitting...' : 'Submit Booking'}
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
-    </>
   );
 
-  // Render My Requests Tab
+  // Render My Bookings Tab
   const renderMyRequests = () => (
     <>
-      <div style={styles.header}>
-        <h1 style={styles.greeting}>My Requests</h1>
-        <p style={styles.subtitle}>Track the status of your facility requests.</p>
-      </div>
+      <Modal
+        isOpen={showRequestForm}
+        onClose={() => setShowRequestForm(false)}
+        title="Submit Facility Booking"
+        size="xl"
+      >
+        {renderSubmitRequest()}
+      </Modal>
 
-      <div style={styles.statsGrid}>
-        <StatCard title="Total" value={stats.totalRequests} icon="file" color="#2563EB" />
-        <StatCard title="Pending" value={stats.pendingRequests} icon="clock" color="#F59E0B" />
-        <StatCard title="Approved" value={stats.approvedRequests} icon="check" color="#10B981" />
-        <StatCard title="Rejected" value={stats.rejectedRequests} icon="x" color="#EF4444" />
-      </div>
-
-      <div style={styles.filterBar}>
-        <select
-          value={requestFilter}
-          onChange={(e) => setRequestFilter(e.target.value)}
-          style={styles.select}
-        >
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <button
-          onClick={() => setActiveTab('submit')}
-          style={styles.submitBtn}
-        >
-          + New Request
-        </button>
-      </div>
-
-      {filteredRequests.length === 0 ? (
-        <EmptyState
-          icon="file"
-          title="No requests found"
-          message={requestFilter 
-            ? "No requests match your filter criteria." 
-            : "You haven't submitted any facility requests yet."
-          }
-          actionLabel="Submit a Request"
-          onAction={() => setActiveTab('submit')}
-        />
-      ) : (
-        <div style={styles.requestsGrid}>
-          {filteredRequests.map((request, index) => (
-            <RequestCard
-              key={request.id || index}
-              request={request}
-              onCancel={request.status?.toLowerCase() === 'pending' ? handleCancelRequest : undefined}
-            />
-          ))}
+      <div>
+        <div style={styles.header}>
+          <h1 style={styles.greeting}>My Bookings</h1>
+          <p style={styles.subtitle}>View and manage your facility bookings in one place.</p>
         </div>
-      )}
 
-      <ConfirmModal
-        isOpen={!!requestToCancel}
-        onClose={() => setRequestToCancel(null)}
-        onConfirm={confirmCancelRequest}
-        title="Cancel Request"
-        message={`Are you sure you want to cancel your request for "${requestToCancel?.facility?.name || 'this facility'}"?`}
-        confirmLabel="Cancel Request"
-        confirmColor="#EF4444"
-        loading={actionLoading}
-      />
+        <div style={styles.statsGrid}>
+          <StatCard title="Total" value={stats.totalRequests} icon="file" color="#2563EB" />
+          <StatCard title="Pending" value={stats.pendingRequests} icon="clock" color="#F59E0B" />
+          <StatCard title="Approved" value={stats.approvedRequests} icon="check" color="#10B981" />
+          <StatCard title="Rejected" value={stats.rejectedRequests} icon="x" color="#EF4444" />
+        </div>
+
+        <div style={styles.filterBar}>
+          <select
+            value={requestFilter}
+            onChange={(e) => setRequestFilter(e.target.value)}
+            style={styles.select}
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button
+            onClick={() => {
+              setShowRequestForm(true);
+              setWizardStep(1);
+            }}
+            style={{ ...styles.submitBtn, padding: '10px 18px' }}
+          >
+            + New Booking
+          </button>
+        </div>
+
+        {filteredRequests.length === 0 ? (
+          <EmptyState
+            icon="file"
+            title="No bookings found"
+            message="You have no bookings matching the selected filter."
+          />
+        ) : (
+          <div style={styles.requestsGrid}>
+            {filteredRequests.map((request, index) => (
+              <RequestCard
+                key={request.id || index}
+                request={request}
+                onCancel={request.status?.toLowerCase() === 'pending' ? handleCancelRequest : undefined}
+              />
+            ))}
+          </div>
+        )}
+
+        <ConfirmModal
+          isOpen={!!requestToCancel}
+          onClose={() => setRequestToCancel(null)}
+          onConfirm={confirmCancelRequest}
+          title="Cancel Booking"
+          message={`Are you sure you want to cancel your booking for "${requestToCancel?.facility?.name || 'this facility'}"?`}
+          confirmLabel="Cancel Booking"
+          confirmColor="#EF4444"
+          loading={actionLoading}
+        />
+      </div>
     </>
   );
 
@@ -978,11 +986,11 @@ const UserDashboard = () => {
             </span>
           </div>
           <div style={styles.profileInfoItem}>
-            <span style={{ color: '#64748B', fontSize: '14px' }}>Total Requests</span>
+            <span style={{ color: '#64748B', fontSize: '14px' }}>Total Bookings</span>
             <span style={{ fontWeight: '600' }}>{stats.totalRequests}</span>
           </div>
           <div style={styles.profileInfoItem}>
-            <span style={{ color: '#64748B', fontSize: '14px' }}>Approved Requests</span>
+            <span style={{ color: '#64748B', fontSize: '14px' }}>Approved Bookings</span>
             <span style={{ fontWeight: '600', color: '#10B981' }}>{stats.approvedRequests}</span>
           </div>
           <div style={styles.profileInfoItem}>
@@ -1031,7 +1039,6 @@ const UserDashboard = () => {
 
     switch (activeTab) {
       case 'home': return renderHome();
-      case 'submit': return renderSubmitRequest();
       case 'requests': return renderMyRequests();
       case 'announcements': return renderAnnouncements();
       case 'profile': return renderProfile();

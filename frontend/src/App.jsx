@@ -12,6 +12,11 @@ import UserDashboard from './pages/UserDashboard';
 import ModeratorDashboard from './pages/ModeratorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
+// Booking Pages
+import MyBookings from './pages/bookings/MyBookings';
+import CreateBooking from './pages/bookings/CreateBooking';
+import AdminBookings from './pages/bookings/AdminBookings';
+
 function App() {
   return (
     <AuthProvider>
@@ -22,37 +27,63 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/oauth2/callback" element={<OAuthCallback />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          
+
           {/* User Dashboard - all authenticated users */}
-          <Route 
-            path="/dashboard/user" 
+          <Route
+            path="/dashboard/user"
             element={
               <ProtectedRoute>
                 <UserDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* Moderator Dashboard - MODERATOR and ADMIN only */}
-          <Route 
-            path="/dashboard/moderator" 
+          <Route
+            path="/dashboard/moderator"
             element={
               <ProtectedRoute requiredRoles={['ROLE_MODERATOR', 'ROLE_ADMIN']}>
                 <ModeratorDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* Admin Dashboard - ADMIN only */}
-          <Route 
-            path="/dashboard/admin" 
+          <Route
+            path="/dashboard/admin"
             element={
               <ProtectedRoute requiredRoles={['ROLE_ADMIN']}>
                 <AdminDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
+          {/* Booking Routes */}
+          <Route
+            path="/bookings/my"
+            element={
+              <ProtectedRoute>
+                <MyBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bookings/create"
+            element={
+              <ProtectedRoute>
+                <CreateBooking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bookings"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN']}>
+                <AdminBookings />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Legacy dashboard redirect */}
           <Route path="/dashboard" element={<Navigate to="/dashboard/user" replace />} />
         </Routes>

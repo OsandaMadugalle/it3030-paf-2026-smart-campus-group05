@@ -49,11 +49,12 @@ const StepIndicator = ({ steps, currentStep }) => {
   return (
     <div style={styles.container}>
       {steps.map((step, index) => {
+        const stepLabel = typeof step === 'string' ? step : step?.title || step?.label || '';
         const isActive = index + 1 === currentStep;
         const isCompleted = index + 1 < currentStep;
 
         return (
-          <div key={index} style={styles.step}>
+          <div key={step?.id || index} style={styles.step}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div style={styles.stepCircle(isActive, isCompleted)}>
                 {isCompleted ? (
@@ -70,7 +71,7 @@ const StepIndicator = ({ steps, currentStep }) => {
                 fontWeight: isActive ? '600' : '500',
                 color: isCompleted || isActive ? '#0F172A' : '#94A3B8',
               }}>
-                {step}
+                {stepLabel}
               </span>
             </div>
             {index < steps.length - 1 && (
