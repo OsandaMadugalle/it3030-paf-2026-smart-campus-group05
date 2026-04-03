@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { getAllFacilities } from '../services/facilityService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -89,12 +90,12 @@ const UserDashboard = () => {
     setLoading(true);
     try {
       const [facilitiesRes, requestsRes, announcementsRes] = await Promise.all([
-        api.get('/facilities').catch(() => ({ data: [] })),
+        getAllFacilities(false).catch(() => []),
         api.get('/requests/my').catch(() => ({ data: [] })),
         api.get('/announcements').catch(() => ({ data: [] })),
       ]);
       
-      setFacilities((facilitiesRes.data || []).filter(f => f.status?.toLowerCase() === 'active'));
+      setFacilities((facilitiesRes || []).filter(f => f.status?.toLowerCase() === 'active'));
       setMyRequests(requestsRes.data || []);
       setAnnouncements(announcementsRes.data || []);
       

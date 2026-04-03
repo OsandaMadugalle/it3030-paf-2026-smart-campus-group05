@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { getAllFacilities } from '../services/facilityService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -81,12 +82,12 @@ const ModeratorDashboard = () => {
     setLoading(true);
     try {
       const [facilitiesRes, requestsRes, usersRes] = await Promise.all([
-        api.get('/facilities').catch(() => ({ data: [] })),
+        getAllFacilities(false).catch(() => []),
         api.get('/requests').catch(() => ({ data: [] })),
         api.get('/moderator/users').catch(() => ({ data: [] })),
       ]);
       
-      setFacilities(facilitiesRes.data || []);
+      setFacilities(facilitiesRes || []);
       setRequests(requestsRes.data || []);
       setUsers(usersRes.data || []);
       

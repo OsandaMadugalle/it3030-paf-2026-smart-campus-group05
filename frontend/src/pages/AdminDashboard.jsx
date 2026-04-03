@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { getAllFacilities, createFacility, updateFacility, deleteFacility } from '../services/facilityService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -118,13 +119,13 @@ const AdminDashboard = () => {
     try {
       const [usersRes, facilitiesRes, requestsRes, announcementsRes] = await Promise.all([
         api.get('/admin/users').catch(() => ({ data: [] })),
-        api.get('/facilities').catch(() => ({ data: [] })),
+        getAllFacilities(true).catch(() => []),
         api.get('/requests').catch(() => ({ data: [] })),
         api.get('/announcements').catch(() => ({ data: [] })),
       ]);
       
       setUsers(usersRes.data || []);
-      setFacilities(facilitiesRes.data || []);
+      setFacilities(facilitiesRes || []);
       setRequests(requestsRes.data || []);
       setAnnouncements(announcementsRes.data || []);
       
@@ -187,7 +188,7 @@ const AdminDashboard = () => {
     if (!facilityToDelete) return;
     setActionLoading(true);
     try {
-      await api.delete(`/facilities/${facilityToDelete.id}`);
+      await deleteFacility(facilityToDelete.id);
       showToast('Facility deleted successfully', 'success');
       setFacilityToDelete(null);
       fetchData();
@@ -202,10 +203,10 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       if (editingFacility) {
-        await api.put(`/facilities/${editingFacility.id}`, data);
+        await updateFacility(editingFacility.id, data);
         showToast('Facility updated successfully', 'success');
       } else {
-        await api.post('/facilities', data);
+        await createFacility(data);
         showToast('Facility created successfully', 'success');
       }
       setShowFacilityForm(false);
