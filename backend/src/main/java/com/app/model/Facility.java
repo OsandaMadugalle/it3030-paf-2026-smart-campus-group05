@@ -61,7 +61,8 @@ public class Facility {
 
     public enum FacilityStatus {
         ACTIVE,
-        OUT_OF_SERVICE
+        OUT_OF_SERVICE,
+        CLOSED
     }
 
     // Constructors

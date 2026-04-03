@@ -14,6 +14,7 @@ const normaliseStatus = (status) => {
   const map = {
     'ACTIVE': 'active',
     'OUT_OF_SERVICE': 'maintenance',
+    'CLOSED': 'closed',
     'active': 'active',
     'maintenance': 'maintenance',
     'closed': 'closed',
@@ -50,9 +51,10 @@ const denormaliseStatus = (status) => {
   const map = {
     'active': 'ACTIVE',
     'maintenance': 'OUT_OF_SERVICE',
-    'closed': 'OUT_OF_SERVICE',
+    'closed': 'CLOSED',
     'ACTIVE': 'ACTIVE',
     'OUT_OF_SERVICE': 'OUT_OF_SERVICE',
+    'CLOSED': 'CLOSED',
   };
   return map[status] || 'ACTIVE';
 };
