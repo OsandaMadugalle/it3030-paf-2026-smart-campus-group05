@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { getAllFacilities } from '../services/facilityService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -27,6 +26,12 @@ const ModeratorDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   
+  React.useEffect(() => {
+    if (activeTab === 'bookings') {
+      navigate('/moderator/bookings');
+    }
+  }, [activeTab, navigate]);
+
   // Data states
   const [facilities, setFacilities] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -82,12 +87,12 @@ const ModeratorDashboard = () => {
     setLoading(true);
     try {
       const [facilitiesRes, requestsRes, usersRes] = await Promise.all([
-        getAllFacilities(false).catch(() => []),
-        api.get('/requests').catch(() => ({ data: [] })),
+        api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
+        api.get('/bookings').catch(() => ({ data: [] })),
         api.get('/moderator/users').catch(() => ({ data: [] })),
       ]);
       
-      setFacilities(facilitiesRes || []);
+      setFacilities(facilitiesRes.data || []);
       setRequests(requestsRes.data || []);
       setUsers(usersRes.data || []);
       
@@ -163,10 +168,15 @@ const ModeratorDashboard = () => {
     setActionLoading(true);
     try {
       const endpoint = requestAction === 'approve' 
-        ? `/requests/${selectedRequest.id}/approve`
-        : `/requests/${selectedRequest.id}/reject`;
+        ? `/bookings/${selectedRequest.id}/approve`
+        : `/bookings/${selectedRequest.id}/reject`;
       
-      await api.put(endpoint, { notes: actionNotes });
+      const payload = {
+        status: requestAction === 'approve' ? 'APPROVED' : 'REJECTED',
+        reason: actionNotes
+      };
+      
+      await api.put(endpoint, payload);
       showToast(`Request ${requestAction}d successfully`, 'success');
       setSelectedRequest(null);
       setRequestAction(null);
@@ -736,15 +746,15 @@ const ModeratorDashboard = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>User</label>
-                  <p style={{ fontWeight: '500' }}>{selectedRequest.user?.name || 'Unknown'}</p>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.requestedByName || selectedRequest.user?.name || 'Unknown'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Email</label>
-                  <p>{selectedRequest.user?.email || '-'}</p>
+                  <p>{selectedRequest.requestedByEmail || selectedRequest.user?.email || '-'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Facility</label>
-                  <p style={{ fontWeight: '500' }}>{selectedRequest.facility?.name || 'N/A'}</p>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.resourceName || selectedRequest.facility?.name || 'N/A'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Current Status</label>
@@ -756,11 +766,11 @@ const ModeratorDashboard = () => {
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Preferred Date</label>
-                  <p>{selectedRequest.preferredDate ? new Date(selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
+                  <p>{selectedRequest.date || selectedRequest.preferredDate ? new Date(selectedRequest.date || selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Time Slot</label>
-                  <p>{selectedRequest.timeSlot || '-'}</p>
+                  <p>{selectedRequest.startTime ? `${selectedRequest.startTime} - ${selectedRequest.endTime}` : (selectedRequest.timeSlot || '-')}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Submitted</label>
@@ -768,11 +778,11 @@ const ModeratorDashboard = () => {
                 </div>
               </div>
               
-              {selectedRequest.additionalNotes && (
+              {(selectedRequest.notes || selectedRequest.additionalNotes) && (
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Additional Notes</label>
                   <p style={{ backgroundColor: '#F8FAFC', padding: '12px', borderRadius: '8px', marginTop: '4px' }}>
-                    {selectedRequest.additionalNotes}
+                    {selectedRequest.notes || selectedRequest.additionalNotes}
                   </p>
                 </div>
               )}

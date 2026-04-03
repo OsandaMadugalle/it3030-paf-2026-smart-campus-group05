@@ -216,20 +216,20 @@ const RequestTable = ({
               <td style={styles.td}>{index + 1}</td>
               <td style={styles.td}>
                 <div style={styles.userCell}>
-                  {request.user?.picture ? (
+                  {request.requestedByAvatar ? (
                     <img 
-                      src={request.user.picture} 
-                      alt={request.user?.name} 
+                      src={request.requestedByAvatar} 
+                      alt={request.requestedByName} 
                       style={{ ...styles.avatar, objectFit: 'cover' }} 
                     />
                   ) : (
-                    <div style={styles.avatar}>{getInitials(request.user?.name || request.userName)}</div>
+                    <div style={styles.avatar}>{getInitials(request.requestedByName || request.user?.name || request.userName)}</div>
                   )}
-                  <span style={styles.userName}>{request.user?.name || request.userName || 'Unknown'}</span>
+                  <span style={styles.userName}>{request.requestedByName || request.user?.name || request.userName || 'Unknown'}</span>
                 </div>
               </td>
               <td style={{ ...styles.td, ...styles.facilityCell }}>
-                {request.facility?.name || request.facilityName || 'N/A'}
+                {request.resourceName || request.facility?.name || request.facilityName || 'N/A'}
               </td>
               <td style={styles.td}>
                 <span style={{ maxWidth: '200px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -237,8 +237,12 @@ const RequestTable = ({
                 </span>
               </td>
               <td style={{ ...styles.td, ...styles.dateCell }}>
-                {formatDate(request.preferredDate)}
-                {request.preferredTime && <span style={{ display: 'block', fontSize: '12px' }}>{request.preferredTime}</span>}
+                {formatDate(request.date || request.preferredDate)}
+                {(request.startTime || request.preferredTime) && (
+                  <span style={{ display: 'block', fontSize: '12px' }}>
+                    {request.startTime} - {request.endTime}
+                  </span>
+                )}
               </td>
               <td style={{ ...styles.td, ...styles.dateCell }}>
                 {formatDate(request.createdAt || request.submittedAt)}
