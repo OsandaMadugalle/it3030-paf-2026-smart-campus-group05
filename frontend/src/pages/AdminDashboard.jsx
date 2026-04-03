@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { getAllFacilities, createFacility, updateFacility, deleteFacility } from '../services/facilityService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -32,10 +31,11 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
+    // Redirect if bookings tab is selected (if it somehow exists)
     if (activeTab === 'bookings') {
-      navigate('/admin/bookings');
+      setActiveTab('overview');
     }
-  }, [activeTab, navigate]);
+  }, [activeTab]);
   
   // Data states
   const [users, setUsers] = useState([]);
@@ -104,7 +104,6 @@ const AdminDashboard = () => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'facilities', label: 'Facilities Management', icon: 'building' },
-    { id: 'bookings', label: 'Bookings Management', icon: 'calendar' },
     { id: 'requests', label: 'Requests Overview', icon: 'file' },
     { id: 'users', label: 'Users & Roles', icon: 'users' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
@@ -119,13 +118,13 @@ const AdminDashboard = () => {
     try {
       const [usersRes, facilitiesRes, requestsRes, announcementsRes] = await Promise.all([
         api.get('/admin/users').catch(() => ({ data: [] })),
-        getAllFacilities(true).catch(() => []),
-        api.get('/requests').catch(() => ({ data: [] })),
+        api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
+        api.get('/bookings').catch(() => ({ data: [] })),
         api.get('/announcements').catch(() => ({ data: [] })),
       ]);
       
       setUsers(usersRes.data || []);
-      setFacilities(facilitiesRes || []);
+      setFacilities(facilitiesRes.data || []);
       setRequests(requestsRes.data || []);
       setAnnouncements(announcementsRes.data || []);
       
@@ -188,7 +187,7 @@ const AdminDashboard = () => {
     if (!facilityToDelete) return;
     setActionLoading(true);
     try {
-      await deleteFacility(facilityToDelete.id);
+      await api.delete(`/facilities/${facilityToDelete.id}`);
       showToast('Facility deleted successfully', 'success');
       setFacilityToDelete(null);
       fetchData();
@@ -203,10 +202,10 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       if (editingFacility) {
-        await updateFacility(editingFacility.id, data);
+        await api.put(`/facilities/${editingFacility.id}`, data);
         showToast('Facility updated successfully', 'success');
       } else {
-        await createFacility(data);
+        await api.post('/facilities', data);
         showToast('Facility created successfully', 'success');
       }
       setShowFacilityForm(false);
@@ -248,10 +247,15 @@ const AdminDashboard = () => {
     setActionLoading(true);
     try {
       const endpoint = requestAction === 'approve' 
-        ? `/requests/${selectedRequest.id}/approve`
-        : `/requests/${selectedRequest.id}/reject`;
+        ? `/bookings/${selectedRequest.id}/approve`
+        : `/bookings/${selectedRequest.id}/reject`;
       
-      await api.put(endpoint, { notes: actionNotes });
+      const payload = {
+        status: requestAction === 'approve' ? 'APPROVED' : 'REJECTED',
+        reason: actionNotes
+      };
+      
+      await api.put(endpoint, payload);
       showToast(`Request ${requestAction}d successfully`, 'success');
       setSelectedRequest(null);
       setRequestAction(null);

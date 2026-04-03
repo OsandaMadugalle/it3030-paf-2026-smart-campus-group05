@@ -14,7 +14,7 @@ export const bookingService = {
     return response.data;
   },
 
-  // Get all bookings (admin only)
+  // Get all bookings (admin/moderator)
   getAllBookings: async (filters = {}) => {
     const response = await api.get('/bookings', { params: filters });
     return response.data;
@@ -26,13 +26,13 @@ export const bookingService = {
     return response.data;
   },
 
-  // Approve a booking (admin only)
+  // Approve a booking (moderator only)
   approveBooking: async (id, data) => {
     const response = await api.put(`/bookings/${id}/approve`, data);
     return response.data;
   },
 
-  // Reject a booking (admin only)
+  // Reject a booking (moderator only)
   rejectBooking: async (id, data) => {
     const response = await api.put(`/bookings/${id}/reject`, data);
     return response.data;

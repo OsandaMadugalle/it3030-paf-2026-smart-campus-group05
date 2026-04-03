@@ -77,7 +77,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
     public ResponseEntity<BookingResponse> approveBooking(
             @PathVariable String id,
             @Valid @RequestBody BookingStatusUpdateRequest request,
@@ -87,7 +87,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MODERATOR', 'ADMIN')")
     public ResponseEntity<BookingResponse> rejectBooking(
             @PathVariable String id,
             @Valid @RequestBody BookingStatusUpdateRequest request,

@@ -34,14 +34,14 @@ public class FacilityController {
             @RequestParam(required = false, defaultValue = "false") boolean adminView,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // Only allow adminView=true if the caller actually has ADMIN role
-        boolean isAdmin = false;
+        // Allow adminView=true if the caller has ADMIN or MODERATOR role
+        boolean isStaff = false;
         if (userDetails != null && userDetails.getAuthorities() != null) {
-            isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            isStaff = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MODERATOR"));
         }
         
-        List<FacilityResponse> facilities = facilityService.getAllFacilities(adminView && isAdmin);
+        List<FacilityResponse> facilities = facilityService.getAllFacilities(adminView && isStaff);
         return ResponseEntity.ok(facilities);
     }
 

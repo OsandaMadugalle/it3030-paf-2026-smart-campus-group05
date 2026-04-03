@@ -84,6 +84,15 @@ function App() {
             }
           />
 
+          <Route
+            path="/moderator/bookings"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_MODERATOR', 'ROLE_ADMIN']}>
+                <AdminBookings />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Legacy dashboard redirect */}
           <Route path="/dashboard" element={<Navigate to="/dashboard/user" replace />} />
         </Routes>
