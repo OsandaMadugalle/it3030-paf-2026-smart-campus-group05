@@ -615,7 +615,7 @@ const UserDashboard = () => {
               <RequestCard
                 key={request.id || index}
                 request={request}
-                onCancel={request.status?.toLowerCase() === 'pending' ? handleCancelRequest : undefined}
+                onCancel={(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') ? handleCancelRequest : undefined}
               />
             ))}
           </div>
@@ -906,7 +906,7 @@ const UserDashboard = () => {
               <RequestCard
                 key={request.id || index}
                 request={request}
-                onCancel={request.status?.toLowerCase() === 'pending' ? handleCancelRequest : undefined}
+                onCancel={(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') ? handleCancelRequest : undefined}
               />
             ))}
           </div>
