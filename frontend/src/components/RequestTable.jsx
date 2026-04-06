@@ -263,27 +263,31 @@ const RequestTable = ({
                         View
                       </button>
                     )}
-                    {request.status?.toLowerCase() === 'pending' && (
+                    {(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') && (
                       <>
-                        {onApprove && (
-                          <button
-                            style={styles.actionBtn('green')}
-                            onClick={() => onApprove(request)}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#A7F3D0'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D1FAE5'}
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {onReject && (
-                          <button
-                            style={styles.actionBtn('red')}
-                            onClick={() => onReject(request)}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#FECACA'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
-                          >
-                            Reject
-                          </button>
+                        {request.status?.toUpperCase() === 'PENDING' && (
+                          <>
+                            {onApprove && (
+                              <button
+                                style={styles.actionBtn('green')}
+                                onClick={() => onApprove(request)}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#A7F3D0'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D1FAE5'}
+                              >
+                                Approve
+                              </button>
+                            )}
+                            {onReject && (
+                              <button
+                                style={styles.actionBtn('red')}
+                                onClick={() => onReject(request)}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#FECACA'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+                              >
+                                Reject
+                              </button>
+                            )}
+                          </>
                         )}
                         {onCancel && (
                           <button

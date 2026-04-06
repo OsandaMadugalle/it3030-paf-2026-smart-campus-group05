@@ -123,6 +123,7 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.APPROVED);
+        booking.setRejectionReason(request.getReason()); // Store approval notes if provided
         booking.setApprovedBy(userPrincipal.getId());
         booking.setApprovedByName(userPrincipal.getName());
         booking.setApprovedAt(LocalDateTime.now());
@@ -165,14 +166,15 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
 
-        if (booking.getStatus() != BookingStatus.APPROVED) {
-            throw new InvalidBookingStateException("Only APPROVED bookings can be cancelled");
+        if (booking.getStatus() != BookingStatus.APPROVED && booking.getStatus() != BookingStatus.PENDING) {
+            throw new InvalidBookingStateException("Only PENDING or APPROVED bookings can be cancelled");
         }
 
         // Check if booking owner or admin
         if (!booking.getRequestedBy().equals(userPrincipal.getId()) &&
-            !userPrincipal.getAuthorities().stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
-            throw new UnauthorizedException("Only booking owner or admin can cancel bookings");
+            !userPrincipal.getAuthorities().stream().anyMatch(auth -> 
+                auth.getAuthority().equals("ROLE_ADMIN") || auth.getAuthority().equals("ROLE_MODERATOR"))) {
+            throw new UnauthorizedException("Only booking owner, moderator or admin can cancel bookings");
         }
 
         // Date must be future
@@ -249,7 +251,7 @@ public class BookingService {
         }
 
         // Calculate canCancel
-        boolean canCancel = booking.getStatus() == BookingStatus.APPROVED &&
+        boolean canCancel = (booking.getStatus() == BookingStatus.APPROVED || booking.getStatus() == BookingStatus.PENDING) &&
                            booking.getDate().isAfter(LocalDate.now());
         response.setCanCancel(canCancel);
 

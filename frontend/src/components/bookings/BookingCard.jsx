@@ -118,19 +118,12 @@ const BookingCard = ({ booking, onCancel, onView, onResubmit }) => {
         </div>
 
         <div className="flex gap-2">
-          {booking.status === 'PENDING' && onCancel && (
+          {booking.canCancel && onCancel && (
             <button
               onClick={handleCancel}
-              className="px-3 py-1 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-            >
-              Cancel
-            </button>
-          )}
-
-          {booking.status === 'APPROVED' && onCancel && booking.canCancel && (
-            <button
-              onClick={handleCancel}
-              className="px-3 py-1 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className={`px-3 py-1 text-sm ${
+                booking.status === 'PENDING' ? 'bg-slate-600' : 'bg-red-600'
+              } text-white rounded-lg hover:opacity-90 transition-colors`}
             >
               Cancel
             </button>
