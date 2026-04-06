@@ -243,7 +243,7 @@ const RequestCard = ({ request, onCancel, onView, onResubmit }) => {
             View Details
           </button>
         )}
-        {status === 'pending' && onCancel && (
+        {(status === 'pending' || status === 'approved') && onCancel && (
           <button
             style={styles.cancelBtn}
             onClick={() => onCancel(request)}

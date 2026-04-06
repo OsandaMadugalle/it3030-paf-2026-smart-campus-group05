@@ -55,8 +55,17 @@ public class BookingController {
     public ResponseEntity<List<BookingResponse>> getAllBookings(
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String resourceId) {
+            @RequestParam(required = false) String resourceId,
+            @RequestParam(required = false) String requestedBy) {
+        
         List<BookingResponse> bookings = bookingService.getAllBookings(status, date, resourceId);
+        
+        if (requestedBy != null) {
+            bookings = bookings.stream()
+                    .filter(b -> b.getRequestedBy().equals(requestedBy))
+                    .collect(Collectors.toList());
+        }
+        
         return ResponseEntity.ok(bookings);
     }
 
