@@ -46,6 +46,8 @@ const UserDashboard = () => {
     purpose: '',
     preferredDate: '',
     timeSlot: '',
+    customStartTime: '',
+    customEndTime: '',
     attendeeCount: '',
     additionalNotes: '',
   });
@@ -152,6 +154,16 @@ const UserDashboard = () => {
         showToast('Please select a time slot', 'warning');
         return;
       }
+      if (requestForm.timeSlot === 'custom') {
+        if (!requestForm.customStartTime || !requestForm.customEndTime) {
+          showToast('Please specify both start and end times for custom slot', 'warning');
+          return;
+        }
+        if (requestForm.customStartTime >= requestForm.customEndTime) {
+          showToast('End time must be after start time', 'warning');
+          return;
+        }
+      }
     }
     setWizardStep(prev => Math.min(3, prev + 1));
   };
@@ -163,8 +175,14 @@ const UserDashboard = () => {
   const handleSubmitRequest = async () => {
     setActionLoading(true);
     try {
-      // Parse the time slot (e.g., '08:00 - 09:00') into startTime and endTime
-      const [startTimeStr, endTimeStr] = requestForm.timeSlot.split(' - ');
+      // Parse the time slot
+      let startTimeStr, endTimeStr;
+      if (requestForm.timeSlot === 'custom') {
+        startTimeStr = requestForm.customStartTime;
+        endTimeStr = requestForm.customEndTime;
+      } else {
+        [startTimeStr, endTimeStr] = requestForm.timeSlot.split(' - ');
+      }
       
       await api.post('/bookings', {
         resourceId: selectedFacility.id,
@@ -183,6 +201,8 @@ const UserDashboard = () => {
         purpose: '',
         preferredDate: '',
         timeSlot: '',
+        customStartTime: '',
+        customEndTime: '',
         attendeeCount: '',
         additionalNotes: '',
       });
@@ -204,6 +224,8 @@ const UserDashboard = () => {
       purpose: '',
       preferredDate: '',
       timeSlot: '',
+      customStartTime: '',
+      customEndTime: '',
       attendeeCount: '',
       additionalNotes: '',
     });
@@ -716,8 +738,38 @@ const UserDashboard = () => {
                         {timeSlots.map(slot => (
                           <option key={slot} value={slot}>{slot}</option>
                         ))}
+                        <option value="custom">Custom Time Slot</option>
                       </select>
                     </div>
+
+                    {requestForm.timeSlot === 'custom' && (
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Custom Time Slot <span style={{ color: '#EF4444' }}>*</span></label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                            <label style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px' }}>Start Time</label>
+                            <input
+                              type="time"
+                              value={requestForm.customStartTime}
+                              onChange={(e) => handleFormChange('customStartTime', e.target.value)}
+                              style={styles.input}
+                              required={requestForm.timeSlot === 'custom'}
+                            />
+                          </div>
+                          <div style={{ alignSelf: 'flex-end', marginBottom: '8px', color: '#64748B' }}>to</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                            <label style={{ fontSize: '12px', color: '#64748B', marginBottom: '4px' }}>End Time</label>
+                            <input
+                              type="time"
+                              value={requestForm.customEndTime}
+                              onChange={(e) => handleFormChange('customEndTime', e.target.value)}
+                              style={styles.input}
+                              required={requestForm.timeSlot === 'custom'}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div style={styles.formGroup}>
@@ -781,7 +833,12 @@ const UserDashboard = () => {
                 </div>
                 <div style={styles.previewRow}>
                   <span style={styles.previewLabel}>Time Slot</span>
-                  <span style={styles.previewValue}>{requestForm.timeSlot}</span>
+                  <span style={styles.previewValue}>
+                    {requestForm.timeSlot === 'custom' 
+                      ? `${requestForm.customStartTime} - ${requestForm.customEndTime}`
+                      : requestForm.timeSlot
+                    }
+                  </span>
                 </div>
                 {requestForm.attendeeCount && (
                   <div style={styles.previewRow}>
