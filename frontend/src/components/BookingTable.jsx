@@ -1,7 +1,7 @@
 import React from 'react';
 import StatusBadge from './StatusBadge';
 
-const RequestTable = ({ 
+const BookingTable = ({ 
   requests = [], 
   showActions = true, 
   onApprove, 
@@ -312,4 +312,4 @@ const RequestTable = ({
   );
 };
 
-export default RequestTable;
+export default BookingTable;

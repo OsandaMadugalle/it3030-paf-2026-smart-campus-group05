@@ -7,7 +7,7 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
-import RequestCard from '../components/RequestCard';
+import BookingCard from '../components/bookings/BookingCard';
 import AnnouncementCard from '../components/AnnouncementCard';
 import StepIndicator from '../components/StepIndicator';
 import Modal from '../components/Modal';
@@ -612,7 +612,7 @@ const UserDashboard = () => {
           </h3>
           <div style={styles.requestsGrid}>
             {myRequests.slice(0, 3).map((request, index) => (
-              <RequestCard
+              <BookingCard
                 key={request.id || index}
                 request={request}
                 onCancel={(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') ? handleCancelRequest : undefined}
@@ -903,7 +903,7 @@ const UserDashboard = () => {
         ) : (
           <div style={styles.requestsGrid}>
             {filteredRequests.map((request, index) => (
-              <RequestCard
+              <BookingCard
                 key={request.id || index}
                 request={request}
                 onCancel={(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') ? handleCancelRequest : undefined}

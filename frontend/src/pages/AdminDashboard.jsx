@@ -9,7 +9,7 @@ import UserTable from '../components/UserTable';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
 import FacilityForm from '../components/FacilityForm';
-import RequestTable from '../components/RequestTable';
+import BookingTable from '../components/BookingTable';
 import AnnouncementCard from '../components/AnnouncementCard';
 import ActivityFeed from '../components/ActivityFeed';
 import CSSBarChart from '../components/CSSBarChart';
@@ -937,7 +937,7 @@ const AdminDashboard = () => {
           </select>
         </div>
 
-        <RequestTable
+        <BookingTable
           requests={paginatedRequests}
           onApprove={handleApproveRequest}
           onReject={handleRejectRequest}
