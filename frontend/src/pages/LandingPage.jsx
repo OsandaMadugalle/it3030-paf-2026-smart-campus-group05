@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useWindowSize';
+import heroImage from '../assets/hero.jpg';
 
 const LandingPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -73,12 +74,14 @@ const LandingPage = () => {
     },
     heroBackground: {
       position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: isMobile ? '400px' : '800px',
-      height: isMobile ? '400px' : '800px',
-      background: 'radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%)',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: `linear-gradient(rgba(15, 23, 42, ${isMobile ? 0.64 : 0.52}), rgba(15, 23, 42, ${isMobile ? 0.64 : 0.52})), url(${heroImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       zIndex: 0,
     },
     heroContent: {
@@ -86,23 +89,23 @@ const LandingPage = () => {
       zIndex: 1,
       maxWidth: '700px',
       padding: isMobile ? '0 16px' : '0 24px',
+      animation: 'fadeUp 0.7s ease forwards',
     },
     heroTitle: {
       fontSize: isMobile ? '36px' : '56px',
       fontWeight: '800',
-      color: '#0F172A',
+      color: '#FFFFFF',
       marginBottom: isMobile ? '16px' : '24px',
       lineHeight: '1.1',
     },
     heroTitleGradient: {
-      background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
+      color: '#FFFFFF',
+      WebkitTextFillColor: '#FFFFFF',
+      textShadow: '0 2px 14px rgba(0, 0, 0, 0.45)',
     },
     heroSubtitle: {
       fontSize: isMobile ? '16px' : '20px',
-      color: '#64748B',
+      color: '#E2E8F0',
       marginBottom: isMobile ? '32px' : '40px',
       lineHeight: '1.6',
     },
@@ -125,6 +128,7 @@ const LandingPage = () => {
       justifyContent: 'center',
       gap: isMobile ? '12px' : '24px',
       flexWrap: 'wrap',
+      animation: 'fadeUp 0.8s ease forwards',
     },
     illustrationShape: {
       width: isMobile ? '80px' : '120px',
@@ -166,6 +170,7 @@ const LandingPage = () => {
       padding: isMobile ? '24px' : '32px',
       border: '1px solid #E2E8F0',
       transition: 'all 0.3s ease',
+      animation: 'fadeUp 0.7s ease forwards',
     },
     featureIcon: {
       width: '56px',
@@ -186,6 +191,63 @@ const LandingPage = () => {
       fontSize: '14px',
       color: '#64748B',
       lineHeight: '1.6',
+    },
+    ctaSection: {
+      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+      padding: isMobile ? '56px 16px' : '80px 48px',
+    },
+    ctaContainer: {
+      maxWidth: '900px',
+      margin: '0 auto',
+      textAlign: 'center',
+      animation: 'fadeUp 0.8s ease forwards',
+    },
+    ctaTitle: {
+      color: '#FFFFFF',
+      fontSize: isMobile ? '28px' : '40px',
+      lineHeight: 1.2,
+      fontWeight: '800',
+      marginBottom: '14px',
+    },
+    ctaSubtitle: {
+      color: '#CBD5E1',
+      fontSize: isMobile ? '15px' : '18px',
+      lineHeight: 1.6,
+      marginBottom: isMobile ? '28px' : '34px',
+    },
+    ctaActions: {
+      display: 'flex',
+      gap: '12px',
+      justifyContent: 'center',
+      flexDirection: isMobile ? 'column' : 'row',
+      alignItems: 'center',
+    },
+    ctaPrimaryBtn: {
+      backgroundColor: '#2563EB',
+      color: '#FFFFFF',
+      border: 'none',
+      borderRadius: '10px',
+      padding: isMobile ? '14px 26px' : '14px 30px',
+      fontSize: '15px',
+      fontWeight: '700',
+      cursor: 'pointer',
+      boxShadow: '0 8px 24px rgba(37, 99, 235, 0.28)',
+      transition: 'all 0.2s ease',
+      width: isMobile ? '100%' : 'auto',
+      maxWidth: isMobile ? '320px' : 'none',
+    },
+    ctaSecondaryBtn: {
+      backgroundColor: 'transparent',
+      color: '#E2E8F0',
+      border: '1px solid #64748B',
+      borderRadius: '10px',
+      padding: isMobile ? '14px 26px' : '14px 30px',
+      fontSize: '15px',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      width: isMobile ? '100%' : 'auto',
+      maxWidth: isMobile ? '320px' : 'none',
     },
     footer: {
       backgroundColor: '#0F172A',
@@ -279,23 +341,25 @@ const LandingPage = () => {
   const features = [
     {
       icon: 'monitor',
-      title: 'Real-time Monitoring',
-      description: 'Track campus operations in real-time with our advanced monitoring dashboard. Get instant updates and alerts.',
+      title: 'Real-time Campus Monitoring',
+      description: 'Live dashboard with facility status, occupancy tracking, and operational insights. Immediate alerts for conflicts or booking changes.',
       color: '#2563EB',
     },
     {
       icon: 'shield',
-      title: 'Role-based Access',
-      description: 'Secure access control with role-based permissions. Admins, moderators, and users each have tailored access.',
+      title: 'Secure Role-based Access',
+      description: 'Enterprise-grade permission system. Admins control the platform, moderators manage approvals, users book independently with full audit trails.',
       color: '#10B981',
     },
     {
       icon: 'bell',
       title: 'Smart Notifications',
-      description: 'Stay informed with intelligent notifications. Never miss important updates about campus operations.',
+      description: 'Intelligent alerts for bookings, approvals, conflicts, and announcements. Customizable by user role and notification preference.',
       color: '#F59E0B',
     },
   ];
+
+  const quickStats = [];
 
   const renderFeatureIcon = (icon, color) => {
     switch (icon) {
@@ -365,8 +429,8 @@ const LandingPage = () => {
             Operations Hub
           </h1>
           <p style={styles.heroSubtitle}>
-            Manage your campus operations efficiently with our modern, intuitive platform.
-            Streamline workflows, enhance communication, and make data-driven decisions.
+            Centralized platform for facility bookings, real-time monitoring, and campus communication.
+            Trusted by admins, moderators, and users for streamlined operations and compliance.
           </p>
           <button
             style={styles.heroCta}
@@ -419,7 +483,7 @@ const LandingPage = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                style={styles.featureCard}
+                style={{ ...styles.featureCard, animationDelay: `${index * 0.1}s` }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.transform = 'translateY(-4px)';
                   e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.1)';
@@ -436,6 +500,46 @@ const LandingPage = () => {
                 <p style={styles.featureDescription}>{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section style={styles.ctaSection}>
+        <div style={styles.ctaContainer}>
+          <h2 style={styles.ctaTitle}>Transform Your Campus Operations Now</h2>
+          <p style={styles.ctaSubtitle}>
+            Join institutions using Smart Campus for secure facility management, real-time monitoring, and effortless communication. Built for administrators, moderators, and users.
+          </p>
+          <div style={styles.ctaActions}>
+            <button
+              style={styles.ctaPrimaryBtn}
+              onClick={() => setShowLoginModal(true)}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#1D4ED8';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563EB';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Login Now
+            </button>
+            <button
+              style={styles.ctaSecondaryBtn}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(148, 163, 184, 0.16)';
+                e.currentTarget.style.borderColor = '#94A3B8';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.borderColor = '#64748B';
+              }}
+            >
+              Back to Top
+            </button>
           </div>
         </div>
       </section>
@@ -545,6 +649,24 @@ const LandingPage = () => {
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation: none !important;
+            transition: none !important;
           }
         }
         
