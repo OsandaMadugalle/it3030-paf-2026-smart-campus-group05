@@ -138,38 +138,6 @@ const LandingPage = () => {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    statsSection: {
-      backgroundColor: '#FFFFFF',
-      borderTop: '1px solid #E2E8F0',
-      borderBottom: '1px solid #E2E8F0',
-      padding: isMobile ? '24px 16px' : '28px 48px',
-    },
-    statsContainer: {
-      maxWidth: '1100px',
-      margin: '0 auto',
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
-      gap: isMobile ? '16px' : '24px',
-    },
-    statItem: {
-      textAlign: 'center',
-      padding: isMobile ? '8px 4px' : '8px 12px',
-      borderRadius: '12px',
-      backgroundColor: '#F8FAFC',
-      animation: 'fadeUp 0.75s ease forwards',
-    },
-    statValue: {
-      fontSize: isMobile ? '22px' : '28px',
-      fontWeight: '800',
-      color: '#0F172A',
-      lineHeight: 1.1,
-      marginBottom: '6px',
-    },
-    statLabel: {
-      fontSize: isMobile ? '12px' : '14px',
-      color: '#64748B',
-      fontWeight: '500',
-    },
     features: {
       backgroundColor: '#FFFFFF',
       padding: isMobile ? '60px 16px' : '100px 48px',
@@ -373,30 +341,25 @@ const LandingPage = () => {
   const features = [
     {
       icon: 'monitor',
-      title: 'Real-time Monitoring',
-      description: 'Track campus operations in real-time with our advanced monitoring dashboard. Get instant updates and alerts.',
+      title: 'Real-time Campus Monitoring',
+      description: 'Live dashboard with facility status, occupancy tracking, and operational insights. Immediate alerts for conflicts or booking changes.',
       color: '#2563EB',
     },
     {
       icon: 'shield',
-      title: 'Role-based Access',
-      description: 'Secure access control with role-based permissions. Admins, moderators, and users each have tailored access.',
+      title: 'Secure Role-based Access',
+      description: 'Enterprise-grade permission system. Admins control the platform, moderators manage approvals, users book independently with full audit trails.',
       color: '#10B981',
     },
     {
       icon: 'bell',
       title: 'Smart Notifications',
-      description: 'Stay informed with intelligent notifications. Never miss important updates about campus operations.',
+      description: 'Intelligent alerts for bookings, approvals, conflicts, and announcements. Customizable by user role and notification preference.',
       color: '#F59E0B',
     },
   ];
 
-  const quickStats = [
-    { value: '99.9%', label: 'System Availability' },
-    { value: '500+', label: 'Monthly Bookings' },
-    { value: '24/7', label: 'Campus Monitoring' },
-    { value: '3 Roles', label: 'Access Levels' },
-  ];
+  const quickStats = [];
 
   const renderFeatureIcon = (icon, color) => {
     switch (icon) {
@@ -466,8 +429,8 @@ const LandingPage = () => {
             Operations Hub
           </h1>
           <p style={styles.heroSubtitle}>
-            Manage your campus operations efficiently with our modern, intuitive platform.
-            Streamline workflows, enhance communication, and make data-driven decisions.
+            Centralized platform for facility bookings, real-time monitoring, and campus communication.
+            Trusted by admins, moderators, and users for streamlined operations and compliance.
           </p>
           <button
             style={styles.heroCta}
@@ -509,21 +472,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section style={styles.statsSection}>
-        <div style={styles.statsContainer}>
-          {quickStats.map((stat, index) => (
-            <div
-              key={stat.label}
-              style={{ ...styles.statItem, animationDelay: `${index * 0.08}s` }}
-            >
-              <div style={styles.statValue}>{stat.value}</div>
-              <div style={styles.statLabel}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Features Section */}
       <section style={styles.features}>
         <div style={styles.featuresContainer}>
@@ -559,9 +507,9 @@ const LandingPage = () => {
       {/* CTA Section */}
       <section style={styles.ctaSection}>
         <div style={styles.ctaContainer}>
-          <h2 style={styles.ctaTitle}>Ready to simplify campus operations?</h2>
+          <h2 style={styles.ctaTitle}>Transform Your Campus Operations Now</h2>
           <p style={styles.ctaSubtitle}>
-            Bring booking, monitoring, and communication into one streamlined platform for admins, moderators, and users.
+            Join institutions using Smart Campus for secure facility management, real-time monitoring, and effortless communication. Built for administrators, moderators, and users.
           </p>
           <div style={styles.ctaActions}>
             <button
