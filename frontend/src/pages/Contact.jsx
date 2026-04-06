@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useWindowSize';
+import PublicNavbar from '../components/PublicNavbar';
+import PublicFooter from '../components/PublicFooter';
 
 const Contact = () => {
   const isMobile = useIsMobile();
@@ -11,50 +12,6 @@ const Contact = () => {
       backgroundColor: '#F8FAFC',
       fontFamily: "'Inter', sans-serif",
       color: '#0F172A',
-    },
-    nav: {
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      backgroundColor: '#FFFFFF',
-      borderBottom: '1px solid #E2E8F0',
-      padding: isMobile ? '12px 16px' : '14px 48px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    brand: {
-      fontWeight: 800,
-      fontSize: isMobile ? '16px' : '20px',
-      color: '#0F172A',
-      textDecoration: 'none',
-    },
-    navActions: {
-      display: 'flex',
-      gap: '10px',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      justifyContent: 'flex-end',
-    },
-    ghostBtn: {
-      border: '1px solid #CBD5E1',
-      color: '#334155',
-      backgroundColor: '#FFFFFF',
-      borderRadius: '8px',
-      padding: isMobile ? '8px 12px' : '9px 14px',
-      fontSize: '14px',
-      fontWeight: 600,
-      textDecoration: 'none',
-    },
-    primaryBtn: {
-      border: 'none',
-      color: '#FFFFFF',
-      backgroundColor: '#2563EB',
-      borderRadius: '8px',
-      padding: isMobile ? '9px 13px' : '10px 16px',
-      fontSize: '14px',
-      fontWeight: 700,
-      textDecoration: 'none',
     },
     hero: {
       maxWidth: '1100px',
@@ -124,27 +81,17 @@ const Contact = () => {
       borderRadius: '12px',
     },
     footer: {
-      borderTop: '1px solid #E2E8F0',
-      padding: isMobile ? '16px' : '18px 48px',
+      backgroundColor: '#0F172A',
+      padding: isMobile ? '24px 16px' : '32px 48px',
       textAlign: 'center',
       color: '#64748B',
-      fontSize: '13px',
-      backgroundColor: '#FFFFFF',
+      fontSize: '14px',
     },
   };
 
   return (
     <div style={styles.page}>
-      <nav style={styles.nav}>
-        <Link to="/" style={styles.brand}>Smart Campus</Link>
-        <div style={styles.navActions}>
-          <Link to="/" style={styles.ghostBtn}>Home</Link>
-          <Link to="/about" style={styles.ghostBtn}>About</Link>
-          <Link to="/facilities" style={styles.ghostBtn}>Facilities</Link>
-          <Link to="/faq" style={styles.ghostBtn}>FAQ</Link>
-          <Link to="/login" style={styles.primaryBtn}>Login</Link>
-        </div>
-      </nav>
+      <PublicNavbar isMobile={isMobile} />
 
       <section style={styles.hero}>
         <h1 style={styles.title}>Contact and Support</h1>
@@ -197,9 +144,7 @@ const Contact = () => {
         </article>
       </section>
 
-      <footer style={styles.footer}>
-        Smart Campus Operations Hub - Public Support Channel
-      </footer>
+      <PublicFooter isMobile={isMobile} />
     </div>
   );
 };

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useWindowSize';
 import heroImage from '../assets/hero.jpg';
+import PublicNavbar from '../components/PublicNavbar';
+import PublicFooter from '../components/PublicFooter';
 
 const LandingPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -18,65 +20,6 @@ const LandingPage = () => {
       minHeight: '100vh',
       backgroundColor: '#F8FAFC',
       fontFamily: "'Inter', sans-serif",
-    },
-    navbar: {
-      backgroundColor: '#FFFFFF',
-      borderBottom: '1px solid #E2E8F0',
-      padding: isMobile ? '12px 16px' : '16px 48px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 100,
-    },
-    logo: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-    },
-    logoIcon: {
-      width: isMobile ? '36px' : '40px',
-      height: isMobile ? '36px' : '40px',
-      borderRadius: '10px',
-      backgroundColor: '#2563EB',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    logoText: {
-      color: '#0F172A',
-      fontSize: isMobile ? '16px' : '20px',
-      fontWeight: '700',
-    },
-    loginBtn: {
-      backgroundColor: '#2563EB',
-      color: '#FFFFFF',
-      border: 'none',
-      padding: isMobile ? '10px 16px' : '12px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    },
-    navActions: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-    },
-    aboutBtn: {
-      backgroundColor: '#FFFFFF',
-      color: '#1E293B',
-      border: '1px solid #CBD5E1',
-      padding: isMobile ? '10px 14px' : '12px 18px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      textDecoration: 'none',
-      transition: 'all 0.2s ease',
     },
     hero: {
       paddingTop: isMobile ? '100px' : '160px',
@@ -408,90 +351,11 @@ const LandingPage = () => {
 
   return (
     <div style={styles.container}>
-      {/* Navbar */}
-      <nav style={styles.navbar}>
-        <div style={styles.logo}>
-          <div style={styles.logoIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </div>
-          <span style={styles.logoText}>Smart Campus</span>
-        </div>
-        <div style={styles.navActions}>
-          <Link
-            to="/contact"
-            style={styles.aboutBtn}
-            onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = '#94A3B8';
-              e.currentTarget.style.backgroundColor = '#F8FAFC';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = '#CBD5E1';
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            Contact
-          </Link>
-          <Link
-            to="/faq"
-            style={styles.aboutBtn}
-            onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = '#94A3B8';
-              e.currentTarget.style.backgroundColor = '#F8FAFC';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = '#CBD5E1';
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            FAQ
-          </Link>
-          <Link
-            to="/facilities"
-            style={styles.aboutBtn}
-            onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = '#94A3B8';
-              e.currentTarget.style.backgroundColor = '#F8FAFC';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = '#CBD5E1';
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            Facilities
-          </Link>
-          <Link
-            to="/about"
-            style={styles.aboutBtn}
-            onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = '#94A3B8';
-              e.currentTarget.style.backgroundColor = '#F8FAFC';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = '#CBD5E1';
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            About
-          </Link>
-          <button
-            style={styles.loginBtn}
-            onClick={() => setShowLoginModal(true)}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#1D4ED8';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563EB';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            Login
-          </button>
-        </div>
-      </nav>
+      <PublicNavbar
+        isMobile={isMobile}
+        onLoginClick={() => setShowLoginModal(true)}
+        fixed={true}
+      />
 
       {/* Hero Section */}
       <section style={styles.hero}>
@@ -618,12 +482,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <p style={styles.footerText}>
-          © {new Date().getFullYear()} Smart Campus Operations Hub. All rights reserved.
-        </p>
-      </footer>
+      <PublicFooter isMobile={isMobile} />
 
       {/* Login Modal */}
       {showLoginModal && (
