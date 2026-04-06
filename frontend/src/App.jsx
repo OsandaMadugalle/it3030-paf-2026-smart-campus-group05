@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Pages
 import LandingPage from './pages/LandingPage';
 import About from './pages/About';
+import Facilities from './pages/Facilities';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import Unauthorized from './pages/Unauthorized';
@@ -26,6 +27,7 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/facilities" element={<Facilities />} />
           <Route path="/login" element={<Login />} />
           <Route path="/oauth2/callback" element={<OAuthCallback />} />
           <Route path="/unauthorized" element={<Unauthorized />} />

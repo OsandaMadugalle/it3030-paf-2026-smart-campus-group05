@@ -1,4 +1,7 @@
+import axios from 'axios';
 import api from './api';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
 
 // Normalise facility data from backend (UPPERCASE enums) to frontend (lowercase)
 const normaliseFacility = (facility) => ({
@@ -80,9 +83,21 @@ const denormaliseType = (type) => {
 
 // Get all facilities (admin sees all, users see active only)
 export const getAllFacilities = async (adminView = false) => {
-  const res = await api.get(`/facilities${adminView ? '?adminView=true' : ''}`);
-  const data = Array.isArray(res.data) ? res.data : [];
-  return data.map(normaliseFacility);
+  try {
+    const res = await api.get(`/facilities${adminView ? '?adminView=true' : ''}`);
+    const data = Array.isArray(res.data) ? res.data : [];
+    return data.map(normaliseFacility);
+  } catch (error) {
+    // Public facilities endpoint can be accessed without token. If a stale token
+    // causes auth failure, retry once without the authenticated axios instance.
+    const status = error?.response?.status;
+    if (!adminView && (status === 401 || status === 403)) {
+      const fallbackRes = await axios.get(`${API_BASE_URL}/facilities`);
+      const fallbackData = Array.isArray(fallbackRes.data) ? fallbackRes.data : [];
+      return fallbackData.map(normaliseFacility);
+    }
+    throw error;
+  }
 };
 
 // Search facilities with filters
