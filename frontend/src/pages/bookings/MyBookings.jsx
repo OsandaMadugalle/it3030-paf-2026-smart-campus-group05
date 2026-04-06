@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { bookingService } from '../../services/bookingService';
-import BookingCard from '../../components/bookings/BookingCard';
+import DetailedBookingCard from '../../components/bookings/DetailedBookingCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import StatusBadge from '../../components/StatusBadge';
@@ -146,7 +146,7 @@ const MyBookings = () => {
       ) : (
         <div className="space-y-4">
           {filteredBookings.map(booking => (
-            <BookingCard
+            <DetailedBookingCard
               key={booking.id}
               booking={booking}
               onCancel={handleCancelBooking}

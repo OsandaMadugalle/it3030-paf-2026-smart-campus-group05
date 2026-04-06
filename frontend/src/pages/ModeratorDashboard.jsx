@@ -7,7 +7,7 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
-import RequestTable from '../components/RequestTable';
+import BookingTable from '../components/BookingTable';
 import ActivityFeed from '../components/ActivityFeed';
 import CSSBarChart from '../components/CSSBarChart';
 import CSSPieChart from '../components/CSSPieChart';
@@ -15,7 +15,6 @@ import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
-import OccupancyDashboard from '../components/OccupancyDashboard';
 
 const ModeratorDashboard = () => {
   const navigate = useNavigate();
@@ -26,17 +25,10 @@ const ModeratorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  
-  React.useEffect(() => {
-    if (activeTab === 'bookings') {
-      navigate('/moderator/bookings');
-    }
-  }, [activeTab, navigate]);
 
   // Data states
   const [facilities, setFacilities] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [users, setUsers] = useState([]);
   const [activities, setActivities] = useState([]);
   
   // Stats
@@ -77,26 +69,22 @@ const ModeratorDashboard = () => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
-    { id: 'bookings', label: 'Bookings Management', icon: 'calendar' },
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
     { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
-    { id: 'occupancy', label: 'Live Occupancy', icon: 'monitor' }
   ];
 
   // Fetch all data
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [facilitiesRes, requestsRes, usersRes] = await Promise.all([
+      const [facilitiesRes, requestsRes] = await Promise.all([
         api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
         api.get('/bookings').catch(() => ({ data: [] })),
-        api.get('/moderator/users').catch(() => ({ data: [] })),
       ]);
       
       setFacilities(facilitiesRes.data || []);
       setRequests(requestsRes.data || []);
-      setUsers(usersRes.data || []);
       
       // Calculate stats
       const today = new Date().toDateString();
@@ -699,7 +687,7 @@ const ModeratorDashboard = () => {
           </select>
         </div>
 
-        <RequestTable
+        <BookingTable
           requests={paginatedRequests}
           onApprove={handleApproveRequest}
           onReject={handleRejectRequest}
@@ -989,22 +977,6 @@ const ModeratorDashboard = () => {
     </>
   );
 
-  const renderOccupancy = () => (
-  <>
-    <div style={styles.header}>
-      <h1 style={styles.greeting}>Live Occupancy</h1>
-      <p style={styles.subtitle}>Real-time view of all campus facilities. Auto-refreshes every 30 seconds.</p>
-    </div>
-    <OccupancyDashboard />
-  </>
-);
-
-  // Render Bookings Tab
-  const renderBookings = () => {
-    navigate('/admin/bookings');
-    return null;
-  };
-
   const renderContent = () => {
     if (loading && activeTab === 'overview') {
       return (
@@ -1017,11 +989,9 @@ const ModeratorDashboard = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'monitor': return renderMonitor();
-      case 'bookings': return renderBookings();
       case 'requests': return renderRequests();
       case 'notifications': return renderNotifications();
       case 'reports': return renderReports();
-      case 'occupancy': return renderOccupancy();
       default: return renderOverview();
     }
   };
@@ -1043,7 +1013,5 @@ const ModeratorDashboard = () => {
     </div>
   );
 };
-
-
 
 export default ModeratorDashboard;
