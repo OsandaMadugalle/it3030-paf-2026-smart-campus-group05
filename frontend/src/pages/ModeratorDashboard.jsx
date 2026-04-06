@@ -15,6 +15,7 @@ import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
+import OccupancyDashboard from '../components/OccupancyDashboard';
 
 const ModeratorDashboard = () => {
   const navigate = useNavigate();
@@ -80,6 +81,7 @@ const ModeratorDashboard = () => {
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
     { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
+    { id: 'occupancy', label: 'Live Occupancy', icon: 'monitor' }
   ];
 
   // Fetch all data
@@ -987,6 +989,16 @@ const ModeratorDashboard = () => {
     </>
   );
 
+  const renderOccupancy = () => (
+  <>
+    <div style={styles.header}>
+      <h1 style={styles.greeting}>Live Occupancy</h1>
+      <p style={styles.subtitle}>Real-time view of all campus facilities. Auto-refreshes every 30 seconds.</p>
+    </div>
+    <OccupancyDashboard />
+  </>
+);
+
   // Render Bookings Tab
   const renderBookings = () => {
     navigate('/admin/bookings');
@@ -1009,6 +1021,7 @@ const ModeratorDashboard = () => {
       case 'requests': return renderRequests();
       case 'notifications': return renderNotifications();
       case 'reports': return renderReports();
+      case 'occupancy': return renderOccupancy();
       default: return renderOverview();
     }
   };
@@ -1030,5 +1043,7 @@ const ModeratorDashboard = () => {
     </div>
   );
 };
+
+
 
 export default ModeratorDashboard;

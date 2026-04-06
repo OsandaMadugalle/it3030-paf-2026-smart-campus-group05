@@ -116,7 +116,6 @@ public class BookingController {
     }
 
     @GetMapping("/resource/{resourceId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<List<BookingResponse>> getBookingsByResource(
             @PathVariable String resourceId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
