@@ -44,6 +44,7 @@ const UserDashboard = () => {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [requestForm, setRequestForm] = useState({
     purpose: '',
+    designation: '',
     preferredDate: '',
     timeSlot: '',
     customStartTime: '',
@@ -146,6 +147,10 @@ const UserDashboard = () => {
         showToast('Please enter a purpose', 'warning');
         return;
       }
+      if (!requestForm.designation) {
+        showToast('Please select your designation', 'warning');
+        return;
+      }
       if (!requestForm.preferredDate) {
         showToast('Please select a date', 'warning');
         return;
@@ -187,6 +192,7 @@ const UserDashboard = () => {
       await api.post('/bookings', {
         resourceId: selectedFacility.id,
         purpose: requestForm.purpose,
+        designation: requestForm.designation,
         date: requestForm.preferredDate,
         startTime: startTimeStr,
         endTime: endTimeStr,
@@ -199,6 +205,7 @@ const UserDashboard = () => {
       setSelectedFacility(null);
       setRequestForm({
         purpose: '',
+        designation: '',
         preferredDate: '',
         timeSlot: '',
         customStartTime: '',
@@ -222,6 +229,7 @@ const UserDashboard = () => {
     setSelectedFacility(null);
     setRequestForm({
       purpose: '',
+      designation: '',
       preferredDate: '',
       timeSlot: '',
       customStartTime: '',
@@ -714,6 +722,21 @@ const UserDashboard = () => {
                     />
                   </div>
 
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Designation <span style={{ color: '#EF4444' }}>*</span></label>
+                    <select
+                      value={requestForm.designation}
+                      onChange={(e) => handleFormChange('designation', e.target.value)}
+                      style={styles.select}
+                      required
+                    >
+                      <option value="">Select your designation</option>
+                      <option value="batch_rep">Batch Representative</option>
+                      <option value="lecturer">Lecturer</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
                   <div style={styles.formRow}>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>Preferred Date <span style={{ color: '#EF4444' }}>*</span></label>
@@ -824,6 +847,14 @@ const UserDashboard = () => {
                 <div style={styles.previewRow}>
                   <span style={styles.previewLabel}>Purpose</span>
                   <span style={styles.previewValue}>{requestForm.purpose}</span>
+                </div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Designation</span>
+                  <span style={styles.previewValue}>
+                    {requestForm.designation === 'batch_rep' ? 'Batch Representative' :
+                     requestForm.designation === 'lecturer' ? 'Lecturer' :
+                     requestForm.designation === 'other' ? 'Other' : '-'}
+                  </span>
                 </div>
                 <div style={styles.previewRow}>
                   <span style={styles.previewLabel}>Date</span>
