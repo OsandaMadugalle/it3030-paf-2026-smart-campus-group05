@@ -755,6 +755,12 @@ const ModeratorDashboard = () => {
                   <p>{selectedRequest.purpose || '-'}</p>
                 </div>
                 <div>
+                  <label style={{ fontSize: '12px', color: '#64748B' }}>Designation</label>
+                  <p>{selectedRequest.designation === 'batch_rep' ? 'Batch Representative' :
+                      selectedRequest.designation === 'lecturer' ? 'Lecturer' :
+                      selectedRequest.designation === 'other' ? 'Other' : '-'}</p>
+                </div>
+                <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Preferred Date</label>
                   <p>{selectedRequest.date || selectedRequest.preferredDate ? new Date(selectedRequest.date || selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
                 </div>
