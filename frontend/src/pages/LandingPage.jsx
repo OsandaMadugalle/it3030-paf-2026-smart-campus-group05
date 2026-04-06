@@ -421,6 +421,20 @@ const LandingPage = () => {
         </div>
         <div style={styles.navActions}>
           <Link
+            to="/contact"
+            style={styles.aboutBtn}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = '#94A3B8';
+              e.currentTarget.style.backgroundColor = '#F8FAFC';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = '#CBD5E1';
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+            }}
+          >
+            Contact
+          </Link>
+          <Link
             to="/faq"
             style={styles.aboutBtn}
             onMouseOver={(e) => {

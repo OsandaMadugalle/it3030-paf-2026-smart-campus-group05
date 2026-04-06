@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage';
 import About from './pages/About';
 import Facilities from './pages/Facilities';
 import FAQ from './pages/FAQ';
+import Contact from './pages/Contact';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import Unauthorized from './pages/Unauthorized';
@@ -30,6 +31,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/facilities" element={<Facilities />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/oauth2/callback" element={<OAuthCallback />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
