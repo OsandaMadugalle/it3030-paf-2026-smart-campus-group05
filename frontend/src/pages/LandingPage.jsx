@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useWindowSize';
 import heroImage from '../assets/hero.jpg';
 
@@ -60,6 +60,22 @@ const LandingPage = () => {
       fontSize: '14px',
       fontWeight: '600',
       cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    navActions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    },
+    aboutBtn: {
+      backgroundColor: '#FFFFFF',
+      color: '#1E293B',
+      border: '1px solid #CBD5E1',
+      padding: isMobile ? '10px 14px' : '12px 18px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '600',
+      textDecoration: 'none',
       transition: 'all 0.2s ease',
     },
     hero: {
@@ -403,20 +419,36 @@ const LandingPage = () => {
           </div>
           <span style={styles.logoText}>Smart Campus</span>
         </div>
-        <button
-          style={styles.loginBtn}
-          onClick={() => setShowLoginModal(true)}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = '#1D4ED8';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = '#2563EB';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Login
-        </button>
+        <div style={styles.navActions}>
+          <Link
+            to="/about"
+            style={styles.aboutBtn}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = '#94A3B8';
+              e.currentTarget.style.backgroundColor = '#F8FAFC';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = '#CBD5E1';
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+            }}
+          >
+            About
+          </Link>
+          <button
+            style={styles.loginBtn}
+            onClick={() => setShowLoginModal(true)}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#1D4ED8';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563EB';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            Login
+          </button>
+        </div>
       </nav>
 
       {/* Hero Section */}
