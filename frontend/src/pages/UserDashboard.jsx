@@ -1,21 +1,22 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
-import { useRole } from "../hooks/useRole";
-import { useIsMobile } from "../hooks/useWindowSize";
-import Sidebar from "../components/Sidebar";
-import StatCard from "../components/StatCard";
-import StatusBadge from "../components/StatusBadge";
-import FacilityCard from "../components/FacilityCard";
-import BookingCard from "../components/bookings/BookingCard";
-import AnnouncementCard from "../components/AnnouncementCard";
-import StepIndicator from "../components/StepIndicator";
-import Modal from "../components/Modal";
-import ConfirmModal from "../components/ConfirmModal";
-import EmptyState from "../components/EmptyState";
-import LoadingSpinner, { SkeletonCard } from "../components/LoadingSpinner";
-import { showToast } from "../components/Toast";
-import IncidentManager from "./IncidentManager";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { useRole } from '../hooks/useRole';
+import { useIsMobile } from '../hooks/useWindowSize';
+import Sidebar from '../components/Sidebar';
+import StatCard from '../components/StatCard';
+import StatusBadge from '../components/StatusBadge';
+import FacilityCard from '../components/FacilityCard';
+import BookingCard from '../components/bookings/BookingCard';
+import AnnouncementCard from '../components/AnnouncementCard';
+import StepIndicator from '../components/StepIndicator';
+import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
+import EmptyState from '../components/EmptyState';
+import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
+import { showToast } from '../components/Toast';
+import FacilityCalendar from '../components/FacilityCalendar';
+import BookingQRManager from '../components/BookingQRManager';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -63,11 +64,12 @@ const UserDashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   const navItems = [
-    { id: "home", label: "Home", icon: "home" },
-    { id: "requests", label: "Bookings", icon: "file" },
-    { id: "announcements", label: "Announcements", icon: "megaphone" },
-    { id: "profile", label: "My Profile", icon: "user" },
-    { id: "incidents", label: "Help Desk / Incidents", icon: "tool" },
+    { id: 'home', label: 'Home', icon: 'home' },
+    { id: 'calendar', label: 'Availability', icon: 'calendar' },
+    { id: 'requests', label: 'Bookings', icon: 'file' },
+    { id: 'qr', label: 'QR Codes', icon: 'qr' },
+    { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
+    { id: 'profile', label: 'My Profile', icon: 'user' },
   ];
 
   const timeSlots = [
@@ -256,6 +258,18 @@ const UserDashboard = () => {
       attendeeCount: "",
       additionalNotes: "",
     });
+  };
+
+  const handleCalendarBookSlot = (facility, date, time) => {
+    setSelectedFacility(facility);
+    setRequestForm(prev => ({
+      ...prev,
+      preferredDate: date,
+      timeSlot: time,
+    }));
+    setWizardStep(2);
+    setShowRequestForm(true);
+    setActiveTab('requests');
   };
 
   // Request handlers
@@ -1541,6 +1555,26 @@ const UserDashboard = () => {
     </>
   );
 
+  const renderCalendar = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Facility Availability</h1>
+        <p style={styles.subtitle}>See what's free and book instantly by clicking a slot.</p>
+      </div>
+      <FacilityCalendar onBookSlot={handleCalendarBookSlot} />
+    </>
+  );
+
+  const renderQRCodes = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>My QR Codes</h1>
+        <p style={styles.subtitle}>Show your QR code at the facility for check-in verification.</p>
+      </div>
+      <BookingQRManager />
+    </>
+  );
+
   const renderContent = () => {
     if (loading && activeTab === "home") {
       return (
@@ -1553,18 +1587,13 @@ const UserDashboard = () => {
     }
 
     switch (activeTab) {
-      case "home":
-        return renderHome();
-      case "requests":
-        return renderMyRequests();
-      case "announcements":
-        return renderAnnouncements();
-      case "profile":
-        return renderProfile();
-      case "incidents":
-        return <IncidentManager />;
-      default:
-        return renderHome();
+      case 'home': return renderHome();
+      case 'requests': return renderMyRequests();
+      case 'announcements': return renderAnnouncements();
+      case 'profile': return renderProfile();
+      case 'calendar': return renderCalendar();
+      case 'qr': return renderQRCodes();
+      default: return renderHome();
     }
   };
 
