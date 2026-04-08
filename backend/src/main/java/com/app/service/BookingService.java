@@ -212,7 +212,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getBookingsByResource(String resourceId) {
-        List<Booking> bookings = bookingRepository.findByResourceIdAndDate(resourceId, LocalDate.now());
+        List<Booking> bookings = bookingRepository.findByResourceId(resourceId);
         return bookings.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 

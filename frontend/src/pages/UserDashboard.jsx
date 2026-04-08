@@ -15,6 +15,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
+import FacilityCalendar from '../components/FacilityCalendar';
+import BookingQRManager from '../components/BookingQRManager';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -63,7 +65,9 @@ const UserDashboard = () => {
 
   const navItems = [
     { id: 'home', label: 'Home', icon: 'home' },
+    { id: 'calendar', label: 'Availability', icon: 'calendar' },
     { id: 'requests', label: 'Bookings', icon: 'file' },
+    { id: 'qr', label: 'QR Codes', icon: 'qr' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
   ];
@@ -237,6 +241,18 @@ const UserDashboard = () => {
       attendeeCount: '',
       additionalNotes: '',
     });
+  };
+
+  const handleCalendarBookSlot = (facility, date, time) => {
+    setSelectedFacility(facility);
+    setRequestForm(prev => ({
+      ...prev,
+      preferredDate: date,
+      timeSlot: time,
+    }));
+    setWizardStep(2);
+    setShowRequestForm(true);
+    setActiveTab('requests');
   };
 
   // Request handlers
@@ -1124,6 +1140,26 @@ const UserDashboard = () => {
     </>
   );
 
+  const renderCalendar = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Facility Availability</h1>
+        <p style={styles.subtitle}>See what's free and book instantly by clicking a slot.</p>
+      </div>
+      <FacilityCalendar onBookSlot={handleCalendarBookSlot} />
+    </>
+  );
+
+  const renderQRCodes = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>My QR Codes</h1>
+        <p style={styles.subtitle}>Show your QR code at the facility for check-in verification.</p>
+      </div>
+      <BookingQRManager />
+    </>
+  );
+
   const renderContent = () => {
     if (loading && activeTab === 'home') {
       return (
@@ -1138,6 +1174,8 @@ const UserDashboard = () => {
       case 'requests': return renderMyRequests();
       case 'announcements': return renderAnnouncements();
       case 'profile': return renderProfile();
+      case 'calendar': return renderCalendar();
+      case 'qr': return renderQRCodes();
       default: return renderHome();
     }
   };
