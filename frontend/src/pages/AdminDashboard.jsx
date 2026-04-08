@@ -278,7 +278,7 @@ const AdminDashboard = () => {
   const handleRemoveRole = (user) => {
     setSelectedUser(user);
     setUserAction('remove');
-    setSelectedRole('');
+    // No role selection needed for removal anymore as it resets to ROLE_USER
   };
 
   const handleDeleteUser = (user) => {
@@ -304,16 +304,11 @@ const AdminDashboard = () => {
             return;
           }
           await api.post('/admin/roles/assign', { userId: selectedUser.id, role: selectedRole });
-          showToast('Role assigned successfully', 'success');
+          showToast(`Role updated to ${selectedRole.replace('ROLE_', '')} successfully`, 'success');
           break;
         case 'remove':
-          if (!selectedRole) {
-            showToast('Please select a role', 'warning');
-            setActionLoading(false);
-            return;
-          }
-          await api.post('/admin/roles/remove', { userId: selectedUser.id, role: selectedRole });
-          showToast('Role removed successfully', 'success');
+          await api.post('/admin/roles/remove', { userId: selectedUser.id, role: selectedUser.roles[0] });
+          showToast('User reset to base role successfully', 'success');
           break;
         case 'delete':
           await api.delete(`/admin/users/${selectedUser.id}`);
@@ -1115,7 +1110,7 @@ const AdminDashboard = () => {
                   <td style={styles.td}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img
-                        src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=E2E8F0&color=64748B`}
+                        src={user.avatarUrl || user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=E2E8F0&color=64748B`}
                         alt={user.name}
                         style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
                       />
@@ -1138,7 +1133,7 @@ const AdminDashboard = () => {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      Google
+                      {user.provider ? user.provider.charAt(0).toUpperCase() + user.provider.slice(1) : 'Google'}
                     </span>
                   </td>
                   <td style={{ ...styles.td, color: '#64748B' }}>
@@ -1202,8 +1197,8 @@ const AdminDashboard = () => {
         isOpen={!!selectedUser && userAction}
         onClose={() => { setSelectedUser(null); setUserAction(null); setSelectedRole(''); }}
         title={
-          userAction === 'assign' ? 'Assign Role' :
-          userAction === 'remove' ? 'Remove Role' :
+          userAction === 'assign' ? 'Change User Role' :
+          userAction === 'remove' ? 'Reset to Base Role' :
           userAction === 'delete' ? 'Delete User' :
           'Toggle User Status'
         }
@@ -1215,26 +1210,34 @@ const AdminDashboard = () => {
               <p style={{ color: '#64748B', marginBottom: '4px' }}>Selected User</p>
               <p style={{ fontWeight: '600' }}>{selectedUser.name}</p>
               <p style={{ fontSize: '13px', color: '#64748B' }}>{selectedUser.email}</p>
+              <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>
+                Current Role: {selectedUser.roles?.[0]?.replace('ROLE_', '') || 'NONE'}
+              </p>
             </div>
 
-            {(userAction === 'assign' || userAction === 'remove') && (
+            {userAction === 'assign' && (
               <div style={styles.formGroup}>
-                <label style={styles.label}>Select Role</label>
+                <label style={styles.label}>Select New Role</label>
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
                   style={styles.select}
                 >
                   <option value="">Choose a role...</option>
-                  {ROLES.filter(role => 
-                    userAction === 'assign' 
-                      ? !selectedUser.roles?.includes(role)
-                      : selectedUser.roles?.includes(role)
-                  ).map(role => (
+                  {ROLES.filter(role => !selectedUser.roles?.includes(role)).map(role => (
                     <option key={role} value={role}>{role.replace('ROLE_', '')}</option>
                   ))}
                 </select>
+                <p style={{ fontSize: '12px', color: '#64748B', marginTop: '8px' }}>
+                  Setting a new role will replace the current role.
+                </p>
               </div>
+            )}
+
+            {userAction === 'remove' && (
+              <p style={{ color: '#64748B', backgroundColor: '#F8FAFC', padding: '12px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                This will reset the user back to the default <strong>USER</strong> role.
+              </p>
             )}
 
             {userAction === 'delete' && (
@@ -1256,7 +1259,7 @@ const AdminDashboard = () => {
                   backgroundColor: userAction === 'delete' ? '#EF4444' : '#2563EB',
                 }}
                 onClick={confirmUserAction}
-                disabled={actionLoading || ((userAction === 'assign' || userAction === 'remove') && !selectedRole)}
+                disabled={actionLoading || (userAction === 'assign' && !selectedRole)}
               >
                 {actionLoading ? 'Processing...' : 'Confirm'}
               </button>
