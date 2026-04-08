@@ -55,17 +55,8 @@ public class BookingController {
     public ResponseEntity<List<BookingResponse>> getAllBookings(
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String resourceId,
-            @RequestParam(required = false) String requestedBy) {
-        
+            @RequestParam(required = false) String resourceId) {
         List<BookingResponse> bookings = bookingService.getAllBookings(status, date, resourceId);
-        
-        if (requestedBy != null) {
-            bookings = bookings.stream()
-                    .filter(b -> b.getRequestedBy().equals(requestedBy))
-                    .collect(Collectors.toList());
-        }
-        
         return ResponseEntity.ok(bookings);
     }
 
@@ -116,7 +107,6 @@ public class BookingController {
     }
 
     @GetMapping("/resource/{resourceId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<List<BookingResponse>> getBookingsByResource(
             @PathVariable String resourceId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {

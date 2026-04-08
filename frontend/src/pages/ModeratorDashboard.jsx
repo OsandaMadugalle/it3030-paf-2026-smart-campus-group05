@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
 import BookingTable from '../components/BookingTable';
 import ActivityFeed from '../components/ActivityFeed';
+import OccupancyDashboard from '../components/OccupancyDashboard';
 import CSSBarChart from '../components/CSSBarChart';
 import CSSPieChart from '../components/CSSPieChart';
 import Modal from '../components/Modal';
@@ -70,6 +71,7 @@ const ModeratorDashboard = () => {
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
+    { id: 'occupancy', label: 'Live Occupancy', icon: 'users' },
     { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
   ];
@@ -983,6 +985,16 @@ const ModeratorDashboard = () => {
     </>
   );
 
+  const renderOccupancy = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Live Occupancy</h1>
+        <p style={styles.subtitle}>Real-time view of all campus facilities. Auto-refreshes every 30 seconds.</p>
+      </div>
+      <OccupancyDashboard />
+    </>
+  );
+
   const renderContent = () => {
     if (loading && activeTab === 'overview') {
       return (
@@ -996,6 +1008,7 @@ const ModeratorDashboard = () => {
       case 'overview': return renderOverview();
       case 'monitor': return renderMonitor();
       case 'requests': return renderRequests();
+      case 'occupancy': return renderOccupancy();
       case 'notifications': return renderNotifications();
       case 'reports': return renderReports();
       default: return renderOverview();
