@@ -39,6 +39,17 @@ const StatusBadge = ({ status, size = 'md' }) => {
     parking: { bg: '#F1F5F9', color: '#64748B', label: 'Parking' },
     dormitory: { bg: '#CFFAFE', color: '#0891B2', label: 'Dormitory' },
     
+    // Ticket Workflow statuses
+    open: { bg: '#DBEAFE', color: '#1D4ED8', label: 'Open' },
+    in_progress: { bg: '#FEF3C7', color: '#B45309', label: 'In Progress' },
+    resolved: { bg: '#D1FAE5', color: '#047857', label: 'Resolved' },
+    rejected: { bg: '#FEE2E2', color: '#DC2626', label: 'Rejected' },
+    closed: { bg: '#F1F5F9', color: '#64748B', label: 'Closed' },
+
+    // Ticket Priorities (already handled by your existing priority section,
+    // but ensure these match your backend Enum)
+    high: { bg: '#FFE4E6', color: '#BE123C', label: 'High' },
+    
     // Roles
     ROLE_ADMIN: { bg: '#FEE2E2', color: '#DC2626', label: 'Admin' },
     ROLE_MODERATOR: { bg: '#FEF3C7', color: '#B45309', label: 'Moderator' },
