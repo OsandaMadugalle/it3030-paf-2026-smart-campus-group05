@@ -17,6 +17,7 @@ import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
 import FacilityCalendar from '../components/FacilityCalendar';
 import BookingQRManager from '../components/BookingQRManager';
+import IncidentManager from './IncidentManager';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ const UserDashboard = () => {
     { id: 'calendar', label: 'Availability', icon: 'calendar' },
     { id: 'requests', label: 'Bookings', icon: 'file' },
     { id: 'qr', label: 'QR Codes', icon: 'qr' },
+    { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
   ];
@@ -1593,6 +1595,7 @@ const UserDashboard = () => {
       case 'profile': return renderProfile();
       case 'calendar': return renderCalendar();
       case 'qr': return renderQRCodes();
+      case 'incidents' : return <IncidentManager/>;
       default: return renderHome();
     }
   };
