@@ -12,6 +12,6 @@ import java.util.Optional;
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
-    List<User> findByRolesContaining(Role role);
+    List<User> findByRoles(Role role);
     boolean existsByEmail(String email);
 }

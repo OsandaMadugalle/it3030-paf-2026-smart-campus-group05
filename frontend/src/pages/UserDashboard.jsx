@@ -82,7 +82,6 @@ const UserDashboard = () => {
     { id: 'qr', label: 'QR Codes', icon: 'qr' },
     { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
-    { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
   ];
 

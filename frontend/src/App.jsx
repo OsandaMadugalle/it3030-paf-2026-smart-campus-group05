@@ -23,7 +23,6 @@ import AdminBookings from './pages/bookings/AdminBookings';
 
 // Notification Pages
 import NotificationsPage from './pages/notifications/NotificationsPage';
-import NotificationPreferences from './pages/notifications/NotificationPreferences';
 import MyNotificationAnalytics from './pages/notifications/MyNotificationAnalytics';
 
 function App() {
@@ -112,14 +111,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notifications/preferences"
-            element={
-              <ProtectedRoute>
-                <NotificationPreferences />
               </ProtectedRoute>
             }
           />

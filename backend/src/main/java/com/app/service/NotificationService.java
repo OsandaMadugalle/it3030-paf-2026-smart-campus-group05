@@ -48,6 +48,29 @@ public class NotificationService {
         UserNotificationPreference prefs = preferenceRepository.findByUserId(userId)
                 .orElseGet(() -> preferenceRepository.save(UserNotificationPreference.builder().userId(userId).build()));
 
+        // Mute check logic moved to real-time delivery block below
+        if (prefs.isMuteAll()) {
+            if (prefs.getMutedUntil() != null && !prefs.getMutedUntil().isAfter(LocalDateTime.now())) {
+                // Auto unmute
+                prefs.setMuteAll(false);
+                prefs.setMutedUntil(null);
+                preferenceRepository.save(prefs);
+            }
+        }
+
+        // Specific category toggle check
+        boolean enabled = switch (type) {
+            case BOOKING_REQUESTED -> prefs.isBookingRequestedEnabled();
+            case BOOKING_APPROVED -> prefs.isBookingApprovedEnabled();
+            case BOOKING_REJECTED -> prefs.isBookingRejectedEnabled();
+            case BOOKING_CANCELLED -> prefs.isBookingCancelledEnabled();
+            case TICKET_CREATED -> prefs.isTicketCreatedEnabled();
+            case TICKET_STATUS_UPDATED, TICKET_ASSIGNED -> prefs.isTicketStatusEnabled();
+            case TICKET_COMMENT_ADDED -> prefs.isTicketCommentEnabled();
+            case TICKET_RESOLVED -> prefs.isTicketResolvedEnabled();
+            default -> true;
+        };
+
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         Notification notification = Notification.builder()
@@ -81,8 +104,10 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         
-        // Real-time WebSocket notify
-        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        // Real-time WebSocket notify (only if enabled/not muted)
+        if (enabled && (prefs.getMutedUntil() == null || !prefs.getMutedUntil().isAfter(LocalDateTime.now()))) {
+             messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        }
 
         return saved;
     }
@@ -91,8 +116,6 @@ public class NotificationService {
         return switch (type) {
             case BOOKING_REQUESTED, BOOKING_APPROVED, BOOKING_REJECTED, BOOKING_CANCELLED, BOOKING_REMINDER -> NotificationCategory.BOOKING;
             case TICKET_CREATED, TICKET_ASSIGNED, TICKET_STATUS_UPDATED, TICKET_COMMENT_ADDED, TICKET_RESOLVED, TICKET_CLOSED, TICKET_REJECTED -> NotificationCategory.TICKET;
-            case ANNOUNCEMENT -> NotificationCategory.ANNOUNCEMENT;
-            case SYSTEM_ALERT -> NotificationCategory.SYSTEM;
             default -> NotificationCategory.SYSTEM;
         };
     }
@@ -112,14 +135,14 @@ public class NotificationService {
         };
 
         // Notify Admins
-        List<User> admins = userRepository.findByRolesContaining(Role.ROLE_ADMIN);
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
         for (User admin : admins) {
             sendNotification(admin.getId(), title, message, NotificationType.TICKET_CREATED,
                     priority, ticket.getId(), "TICKET");
         }
 
         // Notify Moderators
-        List<User> moderators = userRepository.findByRolesContaining(Role.ROLE_MODERATOR);
+        List<User> moderators = userRepository.findByRoles(Role.ROLE_MODERATOR);
         for (User moderator : moderators) {
             sendNotification(moderator.getId(), title, message, NotificationType.TICKET_CREATED,
                     priority, ticket.getId(), "TICKET");
@@ -186,14 +209,14 @@ public class NotificationService {
                 booking.getResourceName(), booking.getRequestedByName(), booking.getDate(), booking.getStartTime(), booking.getEndTime());
 
         // Notify Admins
-        List<User> admins = userRepository.findByRolesContaining(Role.ROLE_ADMIN);
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
         for (User admin : admins) {
             sendNotification(admin.getId(), title, message, NotificationType.BOOKING_REQUESTED, 
                     NotificationPriority.HIGH, booking.getId(), "BOOKING");
         }
 
         // Notify Moderators
-        List<User> moderators = userRepository.findByRolesContaining(Role.ROLE_MODERATOR);
+        List<User> moderators = userRepository.findByRoles(Role.ROLE_MODERATOR);
         for (User moderator : moderators) {
             sendNotification(moderator.getId(), title, message, NotificationType.BOOKING_REQUESTED, 
                     NotificationPriority.NORMAL, booking.getId(), "BOOKING");

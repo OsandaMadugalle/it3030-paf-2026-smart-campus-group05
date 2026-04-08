@@ -67,17 +67,11 @@ const ModeratorDashboard = () => {
   const [requestPage, setRequestPage] = useState(1);
   
   // Notification states
-  const [notificationTitle, setNotificationTitle] = useState('');
-  const [notificationMessage, setNotificationMessage] = useState('');
-  const [notificationTarget, setNotificationTarget] = useState('all');
-  const [notificationType, setNotificationType] = useState('info');
-  const [sentNotifications, setSentNotifications] = useState([]);
+  // Loading states
+  const [actionLoading, setActionLoading] = useState(false);
   
   // Report states
   const [reportDateRange, setReportDateRange] = useState('week');
-  
-  // Loading states
-  const [actionLoading, setActionLoading] = useState(false);
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
@@ -85,7 +79,6 @@ const ModeratorDashboard = () => {
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
     { id: 'occupancy', label: 'Live Occupancy', icon: 'users' },
     { id: 'notifications-view', label: 'Notifications Center', icon: 'bell' },
-    { id: 'notifications', label: 'Send Notifications', icon: 'megaphone' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'tool' }
   ];
@@ -190,43 +183,6 @@ const ModeratorDashboard = () => {
       fetchData();
     } catch (err) {
       showToast(`Failed to ${requestAction} request`, 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Notification handlers
-  const handleSendNotification = async (e) => {
-    e.preventDefault();
-    if (!notificationTitle.trim() || !notificationMessage.trim()) {
-      showToast('Please fill in all required fields', 'warning');
-      return;
-    }
-    
-    setActionLoading(true);
-    try {
-      await api.post('/notifications', {
-        title: notificationTitle,
-        message: notificationMessage,
-        target: notificationTarget,
-        type: notificationType,
-      });
-      showToast('Notification sent successfully', 'success');
-      setSentNotifications(prev => [{
-        id: Date.now(),
-        title: notificationTitle,
-        message: notificationMessage,
-        target: notificationTarget,
-        type: notificationType,
-        sentAt: new Date().toISOString(),
-        sentBy: userInfo?.name || 'Moderator',
-      }, ...prev]);
-      setNotificationTitle('');
-      setNotificationMessage('');
-      setNotificationTarget('all');
-      setNotificationType('info');
-    } catch (err) {
-      showToast('Failed to send notification', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -856,101 +812,6 @@ const ModeratorDashboard = () => {
     );
   };
 
-  // Render Notifications Tab
-  const renderNotifications = () => (
-    <>
-      <div style={styles.header}>
-        <h1 style={styles.greeting}>Send Notifications</h1>
-        <p style={styles.subtitle}>Send notifications to campus users.</p>
-      </div>
-
-      <div style={styles.twoColGrid}>
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Compose Notification</h3>
-          <form style={styles.form} onSubmit={handleSendNotification}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Title <span style={{ color: '#EF4444' }}>*</span></label>
-              <input
-                type="text"
-                value={notificationTitle}
-                onChange={(e) => setNotificationTitle(e.target.value)}
-                placeholder="Notification title"
-                style={styles.input}
-                required
-              />
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Message <span style={{ color: '#EF4444' }}>*</span></label>
-              <textarea
-                value={notificationMessage}
-                onChange={(e) => setNotificationMessage(e.target.value)}
-                placeholder="Write your notification message..."
-                style={styles.textarea}
-                required
-                maxLength={500}
-              />
-              <span style={{ fontSize: '12px', color: '#94A3B8' }}>{notificationMessage.length}/500 characters</span>
-            </div>
-            <div style={styles.formRow}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Target Audience</label>
-                <select
-                  value={notificationTarget}
-                  onChange={(e) => setNotificationTarget(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="all">All Users</option>
-                  <option value="ROLE_USER">Students/Staff Only</option>
-                </select>
-              </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Type</label>
-                <select
-                  value={notificationType}
-                  onChange={(e) => setNotificationType(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="info">Info</option>
-                  <option value="warning">Warning</option>
-                  <option value="alert">Alert</option>
-                </select>
-              </div>
-            </div>
-            <button
-              type="submit"
-              style={{ ...styles.submitBtn, opacity: actionLoading ? 0.7 : 1 }}
-              disabled={actionLoading}
-            >
-              {actionLoading ? 'Sending...' : 'Send Notification'}
-            </button>
-          </form>
-        </div>
-
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Recently Sent</h3>
-          {sentNotifications.length === 0 ? (
-            <EmptyState icon="bell" title="No notifications sent" message="Notifications you send will appear here." />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {sentNotifications.slice(0, 5).map((notif, index) => (
-                <div key={notif.id || index} style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', borderLeft: '3px solid #2563EB' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <p style={{ fontWeight: '500', fontSize: '14px' }}>{notif.title}</p>
-                    <StatusBadge status={notif.type || 'info'} size="sm" />
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>{notif.message}</p>
-                  <p style={{ fontSize: '11px', color: '#94A3B8' }}>
-                    Sent to {notif.target === 'all' ? 'All Users' : notif.target} • {new Date(notif.sentAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-
   // Render Reports Tab
   const renderReports = () => (
     <>
@@ -1036,7 +897,6 @@ const ModeratorDashboard = () => {
       case 'monitor': return renderMonitor();
       case 'requests': return renderRequests();
       case 'occupancy': return renderOccupancy();
-      case 'notifications': return renderNotifications();
       case 'reports': return renderReports();
       case 'incidents': return <IncidentManager />;
       default: return renderOverview();
