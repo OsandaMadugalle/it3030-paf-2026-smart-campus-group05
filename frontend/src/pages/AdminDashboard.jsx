@@ -20,6 +20,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
+import IncidentManager from './IncidentManager';
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -107,10 +109,11 @@ const AdminDashboard = () => {
     { id: 'facilities', label: 'Facilities Management', icon: 'building' },
     { id: 'requests', label: 'Requests Overview', icon: 'file' },
     { id: 'users', label: 'Users & Roles', icon: 'users' },
+    { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
     { id: 'notifications', label: 'Notifications', icon: 'bell' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'settings', label: 'Settings', icon: 'settings' }
   ];
 
   // Fetch all data
@@ -767,6 +770,15 @@ const AdminDashboard = () => {
               </svg>
               Manage Users
             </button>
+            <button
+              style={styles.quickActionBtn}
+              onClick={() => setActiveTab('incidents')}
+            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            Manage Incident Tickets
+          </button>
           </div>
         </div>
       </div>
@@ -1680,6 +1692,7 @@ const AdminDashboard = () => {
       case 'reports': return renderReports();
       case 'notifications': return renderNotifications();
       case 'settings': return renderSettings();
+      case 'incidents': return <IncidentManager />;
       default: return renderOverview();
     }
   };
