@@ -60,16 +60,21 @@ public class NotificationService {
 
         // Specific category toggle check
         boolean enabled = switch (type) {
-            case BOOKING_REQUESTED -> prefs.isBookingRequestedEnabled();
-            case BOOKING_APPROVED -> prefs.isBookingApprovedEnabled();
-            case BOOKING_REJECTED -> prefs.isBookingRejectedEnabled();
-            case BOOKING_CANCELLED -> prefs.isBookingCancelledEnabled();
+            case BOOKING_REQUESTED -> prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled();
+            case BOOKING_APPROVED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
+            case BOOKING_REJECTED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
+            case BOOKING_CANCELLED -> prefs.isBookingNotifications() && prefs.isBookingCancelledEnabled();
             case TICKET_CREATED -> prefs.isTicketCreatedEnabled();
             case TICKET_STATUS_UPDATED, TICKET_ASSIGNED -> prefs.isTicketStatusEnabled();
             case TICKET_COMMENT_ADDED -> prefs.isTicketCommentEnabled();
             case TICKET_RESOLVED -> prefs.isTicketResolvedEnabled();
-            default -> true;
+            default -> prefs.isSystemNotifications();
         };
+
+        // If explicitly disabled by user, don't even save it
+        if (!enabled || (prefs.isMuteAll() && (prefs.getMutedUntil() == null || prefs.getMutedUntil().isAfter(LocalDateTime.now())))) {
+            return null;
+        }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -104,10 +109,8 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         
-        // Real-time WebSocket notify (only if enabled/not muted)
-        if (enabled && (prefs.getMutedUntil() == null || !prefs.getMutedUntil().isAfter(LocalDateTime.now()))) {
-             messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
-        }
+        // Real-time WebSocket notify
+        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
 
         return saved;
     }
@@ -246,8 +249,11 @@ public class NotificationService {
 
     public Notification sendManualNotification(String userId, String title, String message, 
                                              NotificationPriority priority, UserPrincipal sender) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        
         Notification n = Notification.builder()
                 .userId(userId)
+                .userEmail(user.getEmail())
                 .title(title)
                 .message(message)
                 .type(NotificationType.MANUAL)
@@ -258,7 +264,10 @@ public class NotificationService {
                 .status(NotificationStatus.DELIVERED)
                 .deliveredAt(LocalDateTime.now())
                 .build();
-        return notificationRepository.save(n);
+        
+        Notification saved = notificationRepository.save(n);
+        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        return saved;
     }
 
     public void sendBulkNotification(List<String> userIds, String title, String message, 

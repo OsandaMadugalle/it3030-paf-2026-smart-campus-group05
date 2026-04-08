@@ -123,7 +123,11 @@ public class NotificationController {
             @Valid @RequestBody NotificationPreferenceRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
         UserNotificationPreference prefs = preferenceRepository.findByUserId(currentUser.getId())
-                .orElseGet(() -> UserNotificationPreference.builder().userId(currentUser.getId()).build());
+                .orElseGet(() -> {
+                    UserNotificationPreference newPrefs = new UserNotificationPreference();
+                    newPrefs.setUserId(currentUser.getId());
+                    return newPrefs;
+                });
         
         prefs.setBookingNotifications(request.isBookingNotifications());
         prefs.setBookingApprovedEnabled(request.isBookingApprovedEnabled());
@@ -139,7 +143,8 @@ public class NotificationController {
         prefs.setDigestIntervalHours(request.getDigestIntervalHours());
         prefs.setPreferredDeliveryHour(request.getPreferredDeliveryHour());
         
-        return ResponseEntity.ok(preferenceRepository.save(prefs));
+        UserNotificationPreference saved = preferenceRepository.save(prefs);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/preferences/mute")
