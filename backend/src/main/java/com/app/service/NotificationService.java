@@ -81,10 +81,94 @@ public class NotificationService {
     private NotificationCategory determineCategory(NotificationType type) {
         return switch (type) {
             case BOOKING_REQUESTED, BOOKING_APPROVED, BOOKING_REJECTED, BOOKING_CANCELLED, BOOKING_REMINDER -> NotificationCategory.BOOKING;
+            case TICKET_CREATED, TICKET_ASSIGNED, TICKET_STATUS_UPDATED, TICKET_COMMENT_ADDED, TICKET_RESOLVED, TICKET_CLOSED, TICKET_REJECTED -> NotificationCategory.TICKET;
             case ANNOUNCEMENT -> NotificationCategory.ANNOUNCEMENT;
             case SYSTEM_ALERT -> NotificationCategory.SYSTEM;
             default -> NotificationCategory.SYSTEM;
         };
+    }
+
+    public void sendTicketCreatedNotification(Ticket ticket) {
+        String title = "New Incident Ticket 🎫";
+        String message = String.format("A new incident ticket #%s has been submitted for %s. Category: %s, Priority: %s",
+                ticket.getId(), 
+                ticket.getLocation() != null ? ticket.getLocation() : "Unknown Location",
+                ticket.getCategory(), 
+                ticket.getPriority());
+
+        NotificationPriority priority = switch (ticket.getPriority()) {
+            case HIGH, CRITICAL -> NotificationPriority.HIGH;
+            case MEDIUM -> NotificationPriority.NORMAL;
+            case LOW -> NotificationPriority.LOW;
+        };
+
+        // Notify Admins
+        List<User> admins = userRepository.findByRolesContaining(Role.ROLE_ADMIN);
+        for (User admin : admins) {
+            sendNotification(admin.getId(), title, message, NotificationType.TICKET_CREATED,
+                    priority, ticket.getId(), "TICKET");
+        }
+
+        // Notify Moderators
+        List<User> moderators = userRepository.findByRolesContaining(Role.ROLE_MODERATOR);
+        for (User moderator : moderators) {
+            sendNotification(moderator.getId(), title, message, NotificationType.TICKET_CREATED,
+                    priority, ticket.getId(), "TICKET");
+        }
+    }
+
+    public void sendTicketAssignedNotification(String technicianUserId, Ticket ticket) {
+        String title = "Ticket Assigned to You 🔧";
+        String message = String.format("Incident ticket #%s for %s has been assigned to you. Please review and begin work.",
+                ticket.getId(), ticket.getLocation() != null ? ticket.getLocation() : "Unknown Location");
+        
+        sendNotification(technicianUserId, title, message, NotificationType.TICKET_ASSIGNED,
+                NotificationPriority.HIGH, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketStatusUpdatedNotification(String userId, Ticket ticket, String oldStatus, String newStatus) {
+        String title = "Ticket Status Updated 🔄";
+        String message = String.format("Your incident ticket #%s status changed from %s to %s",
+                ticket.getId(), oldStatus, newStatus);
+        
+        sendNotification(userId, title, message, NotificationType.TICKET_STATUS_UPDATED,
+                NotificationPriority.NORMAL, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketResolvedNotification(String userId, Ticket ticket, String resolutionNote) {
+        String title = "Ticket Resolved ✅";
+        String message = String.format("Your incident ticket #%s for %s has been resolved. Note: %s",
+                ticket.getId(), ticket.getLocation() != null ? ticket.getLocation() : "Unknown Location", resolutionNote);
+        
+        sendNotification(userId, title, message, NotificationType.TICKET_RESOLVED,
+                NotificationPriority.HIGH, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketRejectedNotification(String userId, Ticket ticket, String reason) {
+        String title = "Ticket Rejected ❌";
+        String message = String.format("Your incident ticket #%s has been rejected. Reason: %s",
+                ticket.getId(), reason);
+        
+        sendNotification(userId, title, message, NotificationType.TICKET_REJECTED,
+                NotificationPriority.HIGH, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketCommentNotification(String userId, Ticket ticket, String commenterName, String commentPreview) {
+        String title = "New Comment on Your Ticket 💬";
+        String message = String.format("%s commented on ticket #%s: %s...",
+                commenterName, ticket.getId(), commentPreview.length() > 50 ? commentPreview.substring(0, 50) : commentPreview);
+        
+        sendNotification(userId, title, message, NotificationType.TICKET_COMMENT_ADDED,
+                NotificationPriority.NORMAL, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketClosedNotification(String userId, Ticket ticket) {
+        String title = "Ticket Closed 🔒";
+        String message = String.format("Your incident ticket #%s for %s has been closed.",
+                ticket.getId(), ticket.getLocation() != null ? ticket.getLocation() : "Unknown Location");
+        
+        sendNotification(userId, title, message, NotificationType.TICKET_CLOSED,
+                NotificationPriority.LOW, ticket.getId(), "TICKET");
     }
 
     public void sendBookingRequestNotification(Booking booking) {

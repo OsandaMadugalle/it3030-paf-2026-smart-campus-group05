@@ -77,6 +77,7 @@ const NotificationsPage = () => {
           <button className={filter === 'ALL' ? 'active' : ''} onClick={() => setFilter('ALL')}>All</button>
           <button className={filter === 'UNREAD' ? 'active' : ''} onClick={() => setFilter('UNREAD')}>Unread</button>
           <button className={filter === 'BOOKING' ? 'active' : ''} onClick={() => setFilter('BOOKING')}>Booking</button>
+          <button className={filter === 'TICKET' ? 'active' : ''} onClick={() => setFilter('TICKET')}>Ticket</button>
           <button className={filter === 'ANNOUNCEMENT' ? 'active' : ''} onClick={() => setFilter('ANNOUNCEMENT')}>News</button>
         </div>
         <div className="search-input">

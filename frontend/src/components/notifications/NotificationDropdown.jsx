@@ -61,6 +61,13 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
       case 'BOOKING_APPROVED': return '✅';
       case 'BOOKING_REJECTED': return '❌';
       case 'BOOKING_CANCELLED': return '⚠️';
+      case 'TICKET_CREATED': return '🎫';
+      case 'TICKET_ASSIGNED': return '🔧';
+      case 'TICKET_STATUS_UPDATED': return '🔄';
+      case 'TICKET_RESOLVED': return '✅';
+      case 'TICKET_REJECTED': return '❌';
+      case 'TICKET_COMMENT_ADDED': return '💬';
+      case 'TICKET_CLOSED': return '🔒';
       case 'ANNOUNCEMENT': return '📢';
       case 'SYSTEM_ALERT': return '🛑';
       case 'DIGEST': return '📧';
@@ -72,6 +79,7 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
     if (filter === 'ALL') return true;
     if (filter === 'UNREAD') return !n.isRead;
     if (filter === 'BOOKING') return n.category === 'BOOKING';
+    if (filter === 'TICKET') return n.category === 'TICKET';
     if (filter === 'ANNOUNCEMENT') return n.category === 'ANNOUNCEMENT';
     return true;
   });
@@ -87,6 +95,7 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
         <button className={filter === 'ALL' ? 'active' : ''} onClick={() => setFilter('ALL')}>All</button>
         <button className={filter === 'UNREAD' ? 'active' : ''} onClick={() => setFilter('UNREAD')}>Unread</button>
         <button className={filter === 'BOOKING' ? 'active' : ''} onClick={() => setFilter('BOOKING')}>Booking</button>
+        <button className={filter === 'TICKET' ? 'active' : ''} onClick={() => setFilter('TICKET')}>Ticket</button>
         <button className={filter === 'ANNOUNCEMENT' ? 'active' : ''} onClick={() => setFilter('ANNOUNCEMENT')}>News</button>
       </div>
 
