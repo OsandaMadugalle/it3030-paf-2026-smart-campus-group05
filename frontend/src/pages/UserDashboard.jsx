@@ -1617,7 +1617,18 @@ const UserDashboard = () => {
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
-      <main style={styles.main}>{renderContent()}</main>
+      <main style={styles.main}>
+        {!isMobile && (
+          <Navbar 
+            title={navItems.find(item => item.id === activeTab)?.label || 'User Dashboard'} 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
+          />
+        )}
+        <div style={styles.contentArea}>
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 };
