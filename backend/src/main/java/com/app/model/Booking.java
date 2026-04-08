@@ -60,6 +60,7 @@ public class Booking {
     @Indexed
     private BookingStatus status = BookingStatus.PENDING;
 
+    private boolean reminderSent = false;
     private String rejectionReason;
     private String cancellationReason;
 
@@ -180,6 +181,14 @@ public class Booking {
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public boolean isReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(boolean reminderSent) {
+        this.reminderSent = reminderSent;
     }
 
     public String getRejectionReason() {

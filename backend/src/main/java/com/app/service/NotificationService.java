@@ -5,12 +5,15 @@ import com.app.repository.NotificationAnalyticsRepository;
 import com.app.repository.NotificationRepository;
 import com.app.repository.UserNotificationPreferenceRepository;
 import com.app.repository.UserRepository;
+import com.app.repository.BookingRepository;
 import com.app.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +27,7 @@ public class NotificationService {
     private final UserNotificationPreferenceRepository preferenceRepository;
     private final NotificationAnalyticsRepository analyticsRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
     private final SmartNotificationService smartNotificationService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -32,14 +36,39 @@ public class NotificationService {
                                UserNotificationPreferenceRepository preferenceRepository,
                                NotificationAnalyticsRepository analyticsRepository,
                                UserRepository userRepository,
+                               BookingRepository bookingRepository,
                                SmartNotificationService smartNotificationService,
                                SimpMessagingTemplate messagingTemplate) {
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
         this.analyticsRepository = analyticsRepository;
         this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
         this.smartNotificationService = smartNotificationService;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    @Scheduled(cron = "0 */15 * * * *") // Run every 15 minutes
+    public void sendBookingReminders() {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        LocalTime threshold = now.plusMinutes(30);
+
+        List<Booking> upcomingBookings = bookingRepository.findByDateAndStatusAndReminderSentFalse(today, BookingStatus.APPROVED);
+
+        for (Booking booking : upcomingBookings) {
+            if (booking.getStartTime().isBefore(threshold) && booking.getStartTime().isAfter(now)) {
+                String title = "Upcoming Booking Reminder ⏰";
+                String message = String.format("Reminder: Your booking for %s starts at %s.", 
+                        booking.getResourceName(), booking.getStartTime());
+                
+                sendNotification(booking.getRequestedBy(), title, message, NotificationType.BOOKING_REMINDER, 
+                        NotificationPriority.HIGH, booking.getId(), "BOOKING");
+                
+                booking.setReminderSent(true);
+                bookingRepository.save(booking);
+            }
+        }
     }
 
     public Notification sendNotification(String userId, String title, String message, NotificationType type, 
@@ -47,6 +76,34 @@ public class NotificationService {
         
         UserNotificationPreference prefs = preferenceRepository.findByUserId(userId)
                 .orElseGet(() -> preferenceRepository.save(UserNotificationPreference.builder().userId(userId).build()));
+
+        // Mute check logic moved to real-time delivery block below
+        if (prefs.isMuteAll()) {
+            if (prefs.getMutedUntil() != null && !prefs.getMutedUntil().isAfter(LocalDateTime.now())) {
+                // Auto unmute
+                prefs.setMuteAll(false);
+                prefs.setMutedUntil(null);
+                preferenceRepository.save(prefs);
+            }
+        }
+
+        // Specific category toggle check
+        boolean enabled = switch (type) {
+            case BOOKING_REQUESTED -> prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled();
+            case BOOKING_APPROVED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
+            case BOOKING_REJECTED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
+            case BOOKING_CANCELLED -> prefs.isBookingNotifications() && prefs.isBookingCancelledEnabled();
+            case TICKET_CREATED -> prefs.isTicketCreatedEnabled();
+            case TICKET_STATUS_UPDATED, TICKET_ASSIGNED -> prefs.isTicketStatusEnabled();
+            case TICKET_COMMENT_ADDED -> prefs.isTicketCommentEnabled();
+            case TICKET_RESOLVED -> prefs.isTicketResolvedEnabled();
+            default -> prefs.isSystemNotifications();
+        };
+
+        // If explicitly disabled by user, don't even save it
+        if (!enabled || (prefs.isMuteAll() && (prefs.getMutedUntil() == null || prefs.getMutedUntil().isAfter(LocalDateTime.now())))) {
+            return null;
+        }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -91,8 +148,6 @@ public class NotificationService {
         return switch (type) {
             case BOOKING_REQUESTED, BOOKING_APPROVED, BOOKING_REJECTED, BOOKING_CANCELLED, BOOKING_REMINDER -> NotificationCategory.BOOKING;
             case TICKET_CREATED, TICKET_ASSIGNED, TICKET_STATUS_UPDATED, TICKET_COMMENT_ADDED, TICKET_RESOLVED, TICKET_CLOSED, TICKET_REJECTED -> NotificationCategory.TICKET;
-            case ANNOUNCEMENT -> NotificationCategory.ANNOUNCEMENT;
-            case SYSTEM_ALERT -> NotificationCategory.SYSTEM;
             default -> NotificationCategory.SYSTEM;
         };
     }
@@ -111,16 +166,18 @@ public class NotificationService {
             case LOW -> NotificationPriority.LOW;
         };
 
-        // Notify Admins
-        List<User> admins = userRepository.findByRolesContaining(Role.ROLE_ADMIN);
+        // Notify Admins with routing based on ticket category (future enhancement)
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
         for (User admin : admins) {
             sendNotification(admin.getId(), title, message, NotificationType.TICKET_CREATED,
                     priority, ticket.getId(), "TICKET");
         }
 
-        // Notify Moderators
-        List<User> moderators = userRepository.findByRolesContaining(Role.ROLE_MODERATOR);
+        // Notify Moderators based on category routing
+        List<User> moderators = userRepository.findByRoles(Role.ROLE_MODERATOR);
         for (User moderator : moderators) {
+            // Simplified routing: If the user has a specific preference or if it's general
+            // For now, keeping it basic but filtered by their individual toggle
             sendNotification(moderator.getId(), title, message, NotificationType.TICKET_CREATED,
                     priority, ticket.getId(), "TICKET");
         }
@@ -186,14 +243,14 @@ public class NotificationService {
                 booking.getResourceName(), booking.getRequestedByName(), booking.getDate(), booking.getStartTime(), booking.getEndTime());
 
         // Notify Admins
-        List<User> admins = userRepository.findByRolesContaining(Role.ROLE_ADMIN);
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
         for (User admin : admins) {
             sendNotification(admin.getId(), title, message, NotificationType.BOOKING_REQUESTED, 
                     NotificationPriority.HIGH, booking.getId(), "BOOKING");
         }
 
         // Notify Moderators
-        List<User> moderators = userRepository.findByRolesContaining(Role.ROLE_MODERATOR);
+        List<User> moderators = userRepository.findByRoles(Role.ROLE_MODERATOR);
         for (User moderator : moderators) {
             sendNotification(moderator.getId(), title, message, NotificationType.BOOKING_REQUESTED, 
                     NotificationPriority.NORMAL, booking.getId(), "BOOKING");
@@ -221,10 +278,33 @@ public class NotificationService {
                 NotificationPriority.NORMAL, booking.getId(), "BOOKING");
     }
 
+    public void broadcastNotification(String title, String message, NotificationPriority priority, String targetRole, UserPrincipal sender) {
+        List<User> targets;
+        if ("all".equalsIgnoreCase(targetRole)) {
+            targets = userRepository.findAll();
+        } else {
+            try {
+                Role role = Role.valueOf(targetRole.toUpperCase());
+                targets = userRepository.findByRoles(role);
+            } catch (IllegalArgumentException e) {
+                targets = userRepository.findAll();
+            }
+        }
+
+        for (User user : targets) {
+            // Use sendNotification to respect user individual preferences if possible
+            // But for broadcasts, we might want to bypass or use a specific MANUAL type
+            sendManualNotification(user.getId(), title, message, priority, sender);
+        }
+    }
+
     public Notification sendManualNotification(String userId, String title, String message, 
                                              NotificationPriority priority, UserPrincipal sender) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        
         Notification n = Notification.builder()
                 .userId(userId)
+                .userEmail(user.getEmail())
                 .title(title)
                 .message(message)
                 .type(NotificationType.MANUAL)
@@ -235,7 +315,10 @@ public class NotificationService {
                 .status(NotificationStatus.DELIVERED)
                 .deliveredAt(LocalDateTime.now())
                 .build();
-        return notificationRepository.save(n);
+        
+        Notification saved = notificationRepository.save(n);
+        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        return saved;
     }
 
     public void sendBulkNotification(List<String> userIds, String title, String message, 

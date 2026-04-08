@@ -6,8 +6,6 @@ public enum NotificationType {
     BOOKING_REJECTED,
     BOOKING_CANCELLED,
     BOOKING_REMINDER,
-    SYSTEM_ALERT,
-    ANNOUNCEMENT,
     MANUAL,
     DIGEST,
     TICKET_CREATED,

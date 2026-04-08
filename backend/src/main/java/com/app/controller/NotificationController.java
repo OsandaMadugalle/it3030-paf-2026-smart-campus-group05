@@ -80,6 +80,12 @@ public class NotificationController {
         return ResponseEntity.ok(java.util.Collections.singletonMap("updated", true));
     }
 
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<Object> clearAllNotifications(@AuthenticationPrincipal UserPrincipal currentUser) {
+        notificationRepository.deleteByUserId(currentUser.getId());
+        return ResponseEntity.ok(java.util.Collections.singletonMap("cleared", true));
+    }
+
     @PostMapping("/send")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<NotificationResponse> sendManualNotification(
@@ -98,6 +104,20 @@ public class NotificationController {
         // Logic for targetRole would go here if role based
         notificationService.sendBulkNotification(request.getUserIds(), request.getTitle(), request.getMessage(), request.getPriority(), currentUser);
         return new ResponseEntity<>(java.util.Collections.singletonMap("sent", request.getUserIds().size()), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/broadcast")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> broadcastNotification(
+            @RequestBody java.util.Map<String, String> request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        String title = request.get("title");
+        String message = request.get("message");
+        String targetRole = request.getOrDefault("targetRole", "all");
+        NotificationPriority priority = NotificationPriority.valueOf(request.getOrDefault("priority", "NORMAL"));
+        
+        notificationService.broadcastNotification(title, message, priority, targetRole, currentUser);
+        return ResponseEntity.ok(java.util.Collections.singletonMap("broadcast", true));
     }
 
     @GetMapping("/analytics/my")
@@ -123,14 +143,52 @@ public class NotificationController {
             @Valid @RequestBody NotificationPreferenceRequest request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
         UserNotificationPreference prefs = preferenceRepository.findByUserId(currentUser.getId())
-                .orElseGet(() -> UserNotificationPreference.builder().userId(currentUser.getId()).build());
+                .orElseGet(() -> {
+                    UserNotificationPreference newPrefs = new UserNotificationPreference();
+                    newPrefs.setUserId(currentUser.getId());
+                    return newPrefs;
+                });
         
         prefs.setBookingNotifications(request.isBookingNotifications());
-        prefs.setAnnouncementNotifications(request.isAnnouncementNotifications());
+        prefs.setBookingApprovedEnabled(request.isBookingApprovedEnabled());
+        prefs.setBookingRejectedEnabled(request.isBookingRejectedEnabled());
+        prefs.setBookingCancelledEnabled(request.isBookingCancelledEnabled());
+        prefs.setBookingRequestedEnabled(request.isBookingRequestedEnabled());
+        prefs.setTicketCreatedEnabled(request.isTicketCreatedEnabled());
+        prefs.setTicketStatusEnabled(request.isTicketStatusEnabled());
+        prefs.setTicketCommentEnabled(request.isTicketCommentEnabled());
+        prefs.setTicketResolvedEnabled(request.isTicketResolvedEnabled());
         prefs.setSystemNotifications(request.isSystemNotifications());
         prefs.setDigestMode(request.isDigestMode());
         prefs.setDigestIntervalHours(request.getDigestIntervalHours());
         prefs.setPreferredDeliveryHour(request.getPreferredDeliveryHour());
+        
+        UserNotificationPreference saved = preferenceRepository.save(prefs);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/preferences/mute")
+    public ResponseEntity<UserNotificationPreference> muteNotifications(
+            @RequestBody java.util.Map<String, Integer> request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        int hours = request.getOrDefault("hours", 1);
+        UserNotificationPreference prefs = preferenceRepository.findByUserId(currentUser.getId())
+                .orElseGet(() -> UserNotificationPreference.builder().userId(currentUser.getId()).build());
+        
+        prefs.setMuteAll(true);
+        prefs.setMutedUntil(LocalDateTime.now().plusHours(hours));
+        
+        return ResponseEntity.ok(preferenceRepository.save(prefs));
+    }
+
+    @PutMapping("/preferences/unmute")
+    public ResponseEntity<UserNotificationPreference> unmuteNotifications(
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        UserNotificationPreference prefs = preferenceRepository.findByUserId(currentUser.getId())
+                .orElseGet(() -> UserNotificationPreference.builder().userId(currentUser.getId()).build());
+        
+        prefs.setMuteAll(false);
+        prefs.setMutedUntil(null);
         
         return ResponseEntity.ok(preferenceRepository.save(prefs));
     }

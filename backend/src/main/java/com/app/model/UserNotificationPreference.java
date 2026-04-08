@@ -13,12 +13,21 @@ public class UserNotificationPreference {
     private String userId;
     
     private boolean bookingNotifications = true;
-    private boolean announcementNotifications = true;
+    private boolean bookingApprovedEnabled = true;
+    private boolean bookingRejectedEnabled = true;
+    private boolean bookingCancelledEnabled = true;
+    private boolean bookingRequestedEnabled = true;
+    private boolean ticketCreatedEnabled = true;
+    private boolean ticketStatusEnabled = true;
+    private boolean ticketCommentEnabled = true;
+    private boolean ticketResolvedEnabled = true;
+    private boolean muteAll = false;
+    private LocalDateTime mutedUntil;
     private boolean systemNotifications = true;
     private boolean digestMode = false;
     private int digestIntervalHours = 1;
     private int preferredDeliveryHour = -1; // -1 for immediate
-    
+
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
@@ -31,8 +40,28 @@ public class UserNotificationPreference {
     public void setUserId(String userId) { this.userId = userId; }
     public boolean isBookingNotifications() { return bookingNotifications; }
     public void setBookingNotifications(boolean bookingNotifications) { this.bookingNotifications = bookingNotifications; }
-    public boolean isAnnouncementNotifications() { return announcementNotifications; }
-    public void setAnnouncementNotifications(boolean announcementNotifications) { this.announcementNotifications = announcementNotifications; }
+    
+    public boolean isBookingApprovedEnabled() { return bookingApprovedEnabled; }
+    public void setBookingApprovedEnabled(boolean bookingApprovedEnabled) { this.bookingApprovedEnabled = bookingApprovedEnabled; }
+    public boolean isBookingRejectedEnabled() { return bookingRejectedEnabled; }
+    public void setBookingRejectedEnabled(boolean bookingRejectedEnabled) { this.bookingRejectedEnabled = bookingRejectedEnabled; }
+    public boolean isBookingCancelledEnabled() { return bookingCancelledEnabled; }
+    public void setBookingCancelledEnabled(boolean bookingCancelledEnabled) { this.bookingCancelledEnabled = bookingCancelledEnabled; }
+    public boolean isBookingRequestedEnabled() { return bookingRequestedEnabled; }
+    public void setBookingRequestedEnabled(boolean bookingRequestedEnabled) { this.bookingRequestedEnabled = bookingRequestedEnabled; }
+    public boolean isTicketCreatedEnabled() { return ticketCreatedEnabled; }
+    public void setTicketCreatedEnabled(boolean ticketCreatedEnabled) { this.ticketCreatedEnabled = ticketCreatedEnabled; }
+    public boolean isTicketStatusEnabled() { return ticketStatusEnabled; }
+    public void setTicketStatusEnabled(boolean ticketStatusEnabled) { this.ticketStatusEnabled = ticketStatusEnabled; }
+    public boolean isTicketCommentEnabled() { return ticketCommentEnabled; }
+    public void setTicketCommentEnabled(boolean ticketCommentEnabled) { this.ticketCommentEnabled = ticketCommentEnabled; }
+    public boolean isTicketResolvedEnabled() { return ticketResolvedEnabled; }
+    public void setTicketResolvedEnabled(boolean ticketResolvedEnabled) { this.ticketResolvedEnabled = ticketResolvedEnabled; }
+    public boolean isMuteAll() { return muteAll; }
+    public void setMuteAll(boolean muteAll) { this.muteAll = muteAll; }
+    public LocalDateTime getMutedUntil() { return mutedUntil; }
+    public void setMutedUntil(LocalDateTime mutedUntil) { this.mutedUntil = mutedUntil; }
+
     public boolean isSystemNotifications() { return systemNotifications; }
     public void setSystemNotifications(boolean systemNotifications) { this.systemNotifications = systemNotifications; }
     public boolean isDigestMode() { return digestMode; }

@@ -120,7 +120,6 @@ const AdminDashboard = () => {
     { id: 'requests', label: 'Requests Overview', icon: 'file' },
     { id: 'users', label: 'Users & Roles', icon: 'users' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
-    { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
     { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
     { id: 'settings', label: 'Settings', icon: 'settings' }
