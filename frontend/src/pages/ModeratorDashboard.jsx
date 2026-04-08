@@ -74,7 +74,8 @@ const ModeratorDashboard = () => {
     { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
     { id: 'occupancy', label: 'Live Occupancy', icon: 'users' },
-    { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
+    { id: 'notifications-view', label: 'Notifications Center', icon: 'bell' },
+    { id: 'notifications', label: 'Send Notifications', icon: 'megaphone' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'tool' }
   ];
@@ -1039,7 +1040,13 @@ const ModeratorDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />

@@ -1,7 +1,6 @@
 .notifications-page {
-  padding: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: 100%;
 }
 
 .notifications-header {

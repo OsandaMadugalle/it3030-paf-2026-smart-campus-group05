@@ -70,6 +70,7 @@ const UserDashboard = () => {
     { id: 'calendar', label: 'Availability', icon: 'calendar' },
     { id: 'requests', label: 'Bookings', icon: 'file' },
     { id: 'qr', label: 'QR Codes', icon: 'qr' },
+    { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
@@ -1613,7 +1614,13 @@ const UserDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />

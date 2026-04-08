@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import notificationService from '../../services/notificationService';
+import { useRole } from '../../hooks/useRole';
+import { useIsMobile } from '../../hooks/useWindowSize';
+import Sidebar from '../../components/Sidebar';
+import Navbar from '../../components/Navbar';
 import './NotificationsPage.css';
 
 const NotificationsPage = () => {
+  const navigate = useNavigate();
+  const { getUserInfo } = useRole();
+  const userInfo = getUserInfo();
+  const isMobile = useIsMobile();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -21,6 +32,11 @@ const NotificationsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   const handleMarkAsRead = async (id) => {
@@ -63,67 +79,155 @@ const NotificationsPage = () => {
     return matchesFilter && matchesSearch;
   });
 
+  const getNavItems = () => {
+    const role = userInfo?.roles?.[0];
+    if (role === 'ROLE_ADMIN') {
+      return [
+        { id: 'overview', label: 'Overview', icon: 'home' },
+        { id: 'facilities', label: 'Facilities Management', icon: 'building' },
+        { id: 'requests', label: 'Requests Overview', icon: 'file' },
+        { id: 'users', label: 'Users & Roles', icon: 'users' },
+        { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
+        { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
+        { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
+        { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
+        { id: 'settings', label: 'Settings', icon: 'settings' }
+      ];
+    } else if (role === 'ROLE_MODERATOR') {
+      return [
+        { id: 'overview', label: 'Overview', icon: 'home' },
+        { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
+        { id: 'requests', label: 'Facility Requests', icon: 'file' },
+        { id: 'occupancy', label: 'Live Occupancy', icon: 'users' },
+        { id: 'notifications-view', label: 'Notifications Center', icon: 'bell' },
+        { id: 'notifications', label: 'Send Notifications', icon: 'megaphone' },
+        { id: 'reports', label: 'Reports', icon: 'chart' },
+        { id: 'incidents', label: 'Help Desk / Incidents', icon: 'tool' }
+      ];
+    } else {
+      return [
+        { id: 'home', label: 'Home', icon: 'home' },
+        { id: 'calendar', label: 'Availability', icon: 'calendar' },
+        { id: 'requests', label: 'Bookings', icon: 'file' },
+        { id: 'qr', label: 'QR Codes', icon: 'qr' },
+        { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
+        { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
+        { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
+        { id: 'profile', label: 'My Profile', icon: 'user' },
+      ];
+    }
+  };
+
+  const styles = {
+    layout: {
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: '#F8FAFC',
+    },
+    main: {
+      flex: 1,
+      marginLeft: isMobile ? 0 : '240px',
+      padding: isMobile ? '80px 16px 24px 16px' : '0px',
+      transition: 'margin-left 0.3s ease',
+      backgroundColor: '#F8FAFC',
+      minHeight: '100vh',
+    },
+    contentArea: {
+      padding: isMobile ? '0' : '32px',
+    }
+  };
+
   return (
-    <div className="notifications-page">
-      <div className="notifications-header">
-        <h1>Notification Center</h1>
-        <div className="notifications-actions">
-          <button onClick={() => notificationService.markAllAsRead().then(fetchNotifications)}>Mark All Read</button>
-        </div>
-      </div>
-
-      <div className="filter-bar">
-        <div className="filter-tabs">
-          <button className={filter === 'ALL' ? 'active' : ''} onClick={() => setFilter('ALL')}>All</button>
-          <button className={filter === 'UNREAD' ? 'active' : ''} onClick={() => setFilter('UNREAD')}>Unread</button>
-          <button className={filter === 'BOOKING' ? 'active' : ''} onClick={() => setFilter('BOOKING')}>Booking</button>
-          <button className={filter === 'TICKET' ? 'active' : ''} onClick={() => setFilter('TICKET')}>Ticket</button>
-          <button className={filter === 'ANNOUNCEMENT' ? 'active' : ''} onClick={() => setFilter('ANNOUNCEMENT')}>News</button>
-        </div>
-        <div className="search-input">
-          <input 
-            type="text" 
-            placeholder="Search notifications..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+    <div style={styles.layout}>
+      <Sidebar
+        navItems={getNavItems()}
+        userInfo={userInfo}
+        onLogout={handleLogout}
+        activeItem="notifications-view"
+        onNavClick={(id) => {
+          if (id === 'notifications-view') return;
+          const target = userInfo?.roles?.[0] === 'ROLE_ADMIN' ? 'admin' : 
+                        userInfo?.roles?.[0] === 'ROLE_MODERATOR' ? 'moderator' : 'user';
+          navigate(`/dashboard/${target}`);
+          // Note: In a real app we'd pass state to set the active tab
+        }}
+        isOpen={sidebarOpen}
+        onToggle={setSidebarOpen}
+      />
+      
+      <main style={styles.main}>
+        {!isMobile && (
+          <Navbar 
+            title="Notifications Center" 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
           />
-        </div>
-      </div>
-
-      <div className="notifications-list">
-        {loading ? (
-          <div className="loading-state">Loading notifications...</div>
-        ) : filteredNotifications.length === 0 ? (
-          <div className="empty-state">No notifications match your criteria</div>
-        ) : (
-          filteredNotifications.map(n => (
-            <div key={n.id} className={`notification-card ${!n.isRead ? 'unread' : ''}`}>
-              <div className="card-status-dot"></div>
-              <div className="card-content">
-                <div className="card-top">
-                  <h3>{n.title}</h3>
-                  <span className="card-time" title={new Date(n.createdAt).toLocaleString()}>
-                    {getTimeAgo(n.createdAt)}
-                  </span>
-                </div>
-                <p className="card-message">{n.message}</p>
-                <div className="card-badges">
-                  <span className={`badge category-${n.category?.toLowerCase()}`}>{n.category}</span>
-                  {n.priority === 'HIGH' || n.priority === 'URGENT' ? (
-                    <span className={`badge priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
-                  ) : null}
-                </div>
-              </div>
-              <div className="card-actions">
-                {!n.isRead && (
-                  <button className="read-btn" onClick={() => handleMarkAsRead(n.id)}>Mark as Read</button>
-                )}
-                <button className="delete-btn" onClick={() => handleDelete(n.id)}>Delete</button>
+        )}
+        
+        <div style={styles.contentArea}>
+          <div className="notifications-page">
+            <div className="notifications-header">
+              <h1>Notification Center</h1>
+              <div className="notifications-actions">
+                <button onClick={() => notificationService.markAllAsRead().then(fetchNotifications)}>Mark All Read</button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+
+            <div className="filter-bar">
+              <div className="filter-tabs">
+                <button className={filter === 'ALL' ? 'active' : ''} onClick={() => setFilter('ALL')}>All</button>
+                <button className={filter === 'UNREAD' ? 'active' : ''} onClick={() => setFilter('UNREAD')}>Unread</button>
+                <button className={filter === 'BOOKING' ? 'active' : ''} onClick={() => setFilter('BOOKING')}>Booking</button>
+                <button className={filter === 'TICKET' ? 'active' : ''} onClick={() => setFilter('TICKET')}>Ticket</button>
+                <button className={filter === 'ANNOUNCEMENT' ? 'active' : ''} onClick={() => setFilter('ANNOUNCEMENT')}>News</button>
+              </div>
+              <div className="search-input">
+                <input 
+                  type="text" 
+                  placeholder="Search notifications..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="notifications-list">
+              {loading ? (
+                <div className="loading-state">Loading notifications...</div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="empty-state">No notifications match your criteria</div>
+              ) : (
+                filteredNotifications.map(n => (
+                  <div key={n.id} className={`notification-card ${!n.isRead ? 'unread' : ''}`}>
+                    <div className="card-status-dot"></div>
+                    <div className="card-content">
+                      <div className="card-top">
+                        <h3>{n.title}</h3>
+                        <span className="card-time" title={new Date(n.createdAt).toLocaleString()}>
+                          {getTimeAgo(n.createdAt)}
+                        </span>
+                      </div>
+                      <p className="card-message">{n.message}</p>
+                      <div className="card-badges">
+                        <span className={`badge category-${n.category?.toLowerCase()}`}>{n.category}</span>
+                        {n.priority === 'HIGH' || n.priority === 'URGENT' ? (
+                          <span className={`badge priority-${n.priority.toLowerCase()}`}>{n.priority}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="card-actions">
+                      {!n.isRead && (
+                        <button className="read-btn" onClick={() => handleMarkAsRead(n.id)}>Mark as Read</button>
+                      )}
+                      <button className="delete-btn" onClick={() => handleDelete(n.id)}>Delete</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

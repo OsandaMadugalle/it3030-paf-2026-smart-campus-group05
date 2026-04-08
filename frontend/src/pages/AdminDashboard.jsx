@@ -112,7 +112,7 @@ const AdminDashboard = () => {
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
-    { id: 'notifications', label: 'Notifications', icon: 'bell' },
+    { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
     { id: 'settings', label: 'Settings', icon: 'settings' }
   ];
 
@@ -1704,7 +1704,13 @@ const AdminDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
