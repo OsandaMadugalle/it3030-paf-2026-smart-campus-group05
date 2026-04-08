@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
@@ -21,6 +22,7 @@ import IncidentManager from './IncidentManager';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
   const isMobile = useIsMobile();
@@ -28,6 +30,15 @@ const UserDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [loading, setLoading] = useState(true);
+
+  // Auto-switch tab based on notification redirect state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Data states
   const [facilities, setFacilities] = useState([]);
@@ -69,6 +80,7 @@ const UserDashboard = () => {
     { id: 'calendar', label: 'Availability', icon: 'calendar' },
     { id: 'requests', label: 'Bookings', icon: 'file' },
     { id: 'qr', label: 'QR Codes', icon: 'qr' },
+    { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
     { id: 'profile', label: 'My Profile', icon: 'user' },
@@ -326,10 +338,15 @@ const UserDashboard = () => {
     },
     main: {
       flex: 1,
-      marginLeft: isMobile ? 0 : "260px",
-      padding: isMobile ? "80px 16px 24px 16px" : "32px",
-      maxWidth: isMobile ? "100%" : "calc(100% - 260px)",
+      marginLeft: isMobile ? 0 : "240px",
+      padding: isMobile ? "80px 16px 24px 16px" : "0px",
+      maxWidth: isMobile ? "100%" : "calc(100% - 240px)",
       transition: "margin-left 0.3s ease, padding 0.3s ease",
+      backgroundColor: '#F8FAFC',
+      minHeight: '100vh',
+    },
+    contentArea: {
+      padding: isMobile ? '0' : '32px',
     },
     header: {
       marginBottom: "32px",
@@ -1607,11 +1624,28 @@ const UserDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
-      <main style={styles.main}>{renderContent()}</main>
+      <main style={styles.main}>
+        {!isMobile && (
+          <Navbar 
+            title={navItems.find(item => item.id === activeTab)?.label || 'User Dashboard'} 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
+          />
+        )}
+        <div style={styles.contentArea}>
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 };

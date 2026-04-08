@@ -42,7 +42,7 @@ const AdminBookings = () => {
     if (!window.confirm('Are you sure you want to approve this booking?')) return;
 
     try {
-      await bookingService.approveBooking(bookingId, {});
+      await bookingService.approveBooking(bookingId, { status: 'APPROVED' });
       await loadBookings();
     } catch (error) {
       console.error('Error approving booking:', error);
@@ -55,7 +55,7 @@ const AdminBookings = () => {
     if (!rejectionReason) return;
 
     try {
-      await bookingService.rejectBooking(bookingId, { reason: rejectionReason });
+      await bookingService.rejectBooking(bookingId, { status: 'REJECTED', reason: rejectionReason });
       await loadBookings();
     } catch (error) {
       console.error('Error rejecting booking:', error);
