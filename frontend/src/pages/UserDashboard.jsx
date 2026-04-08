@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
@@ -305,10 +306,15 @@ const UserDashboard = () => {
     },
     main: {
       flex: 1,
-      marginLeft: isMobile ? 0 : '260px',
-      padding: isMobile ? '80px 16px 24px 16px' : '32px',
-      maxWidth: isMobile ? '100%' : 'calc(100% - 260px)',
+      marginLeft: isMobile ? 0 : '240px',
+      padding: isMobile ? '80px 16px 24px 16px' : '0px',
+      maxWidth: isMobile ? '100%' : 'calc(100% - 240px)',
       transition: 'margin-left 0.3s ease, padding 0.3s ease',
+      backgroundColor: '#F8FAFC',
+      minHeight: '100vh',
+    },
+    contentArea: {
+      padding: isMobile ? '0' : '32px',
     },
     header: {
       marginBottom: '32px',
@@ -1192,7 +1198,16 @@ const UserDashboard = () => {
         onToggle={setSidebarOpen}
       />
       <main style={styles.main}>
-        {renderContent()}
+        {!isMobile && (
+          <Navbar 
+            title={navItems.find(item => item.id === activeTab)?.label || 'Dashboard'} 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
+          />
+        )}
+        <div style={styles.contentArea}>
+          {renderContent()}
+        </div>
       </main>
     </div>
   );

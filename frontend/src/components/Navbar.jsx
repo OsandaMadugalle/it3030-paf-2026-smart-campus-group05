@@ -1,4 +1,5 @@
 import React from 'react';
+import NotificationBell from './notifications/NotificationBell';
 
 const Navbar = ({ title, userInfo, onLogout, showLogo = false }) => {
   const styles = {
@@ -117,6 +118,7 @@ const Navbar = ({ title, userInfo, onLogout, showLogo = false }) => {
         {title && <h1 style={styles.title}>{title}</h1>}
       </div>
       <div style={styles.right}>
+        {userInfo && <NotificationBell />}
         {userInfo && (
           <div style={styles.userInfo}>
             <div style={styles.avatar}>

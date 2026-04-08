@@ -21,6 +21,11 @@ import MyBookings from './pages/bookings/MyBookings';
 import CreateBooking from './pages/bookings/CreateBooking';
 import AdminBookings from './pages/bookings/AdminBookings';
 
+// Notification Pages
+import NotificationsPage from './pages/notifications/NotificationsPage';
+import NotificationPreferences from './pages/notifications/NotificationPreferences';
+import MyNotificationAnalytics from './pages/notifications/MyNotificationAnalytics';
+
 function App() {
   return (
     <AuthProvider>
@@ -97,6 +102,32 @@ function App() {
             element={
               <ProtectedRoute requiredRoles={['ROLE_MODERATOR', 'ROLE_ADMIN']}>
                 <AdminBookings />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Notification Routes */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications/preferences"
+            element={
+              <ProtectedRoute>
+                <NotificationPreferences />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications/analytics"
+            element={
+              <ProtectedRoute>
+                <MyNotificationAnalytics />
               </ProtectedRoute>
             }
           />
