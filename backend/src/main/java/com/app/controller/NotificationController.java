@@ -80,6 +80,12 @@ public class NotificationController {
         return ResponseEntity.ok(java.util.Collections.singletonMap("updated", true));
     }
 
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<Object> clearAllNotifications(@AuthenticationPrincipal UserPrincipal currentUser) {
+        notificationRepository.deleteByUserId(currentUser.getId());
+        return ResponseEntity.ok(java.util.Collections.singletonMap("cleared", true));
+    }
+
     @PostMapping("/send")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<NotificationResponse> sendManualNotification(
@@ -98,6 +104,20 @@ public class NotificationController {
         // Logic for targetRole would go here if role based
         notificationService.sendBulkNotification(request.getUserIds(), request.getTitle(), request.getMessage(), request.getPriority(), currentUser);
         return new ResponseEntity<>(java.util.Collections.singletonMap("sent", request.getUserIds().size()), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/broadcast")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> broadcastNotification(
+            @RequestBody java.util.Map<String, String> request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        String title = request.get("title");
+        String message = request.get("message");
+        String targetRole = request.getOrDefault("targetRole", "all");
+        NotificationPriority priority = NotificationPriority.valueOf(request.getOrDefault("priority", "NORMAL"));
+        
+        notificationService.broadcastNotification(title, message, priority, targetRole, currentUser);
+        return ResponseEntity.ok(java.util.Collections.singletonMap("broadcast", true));
     }
 
     @GetMapping("/analytics/my")

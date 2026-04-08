@@ -148,7 +148,17 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
       console.error('Error marking all as read:', error);
     }
   };
-
+  const handleClearAll = async () => {
+    if (window.confirm('Are you sure you want to clear all notifications?')) {
+      try {
+        await notificationService.clearAllNotifications();
+        setNotifications([]);
+        onNotificationRead(); // Refresh count
+      } catch (error) {
+        console.error('Error clearing notifications:', error);
+      }
+    }
+  };
   const handleNotificationClick = (notification) => {
     handleMarkAsRead(notification.id);
     onClose();
@@ -233,6 +243,15 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
               {unreadCount > 0 && <span className="unread-count-badge">{unreadCount}</span>}
             </div>
             <div className="header-right">
+              {notifications.length > 0 && (
+                <button 
+                  className="clear-all-btn" 
+                  onClick={handleClearAll}
+                  title="Clear All Notifications"
+                >
+                  Clear All
+                </button>
+              )}
               <button 
                 className="icon-btn" 
                 onClick={() => setView('settings')}

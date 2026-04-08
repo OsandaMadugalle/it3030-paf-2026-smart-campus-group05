@@ -4,6 +4,7 @@ import { Client } from '@stomp/stompjs';
 import { useRole } from '../../hooks/useRole';
 import notificationService from '../../services/notificationService';
 import NotificationDropdown from './NotificationDropdown';
+import { showToast } from '../Toast';
 import './NotificationBell.css';
 
 const NotificationBell = () => {
@@ -84,6 +85,13 @@ const NotificationBell = () => {
             console.log('New real-time notification:', notification);
             setUnreadCount(prev => prev + 1);
             triggerAnimation();
+            
+            // Show real-time Toast
+            showToast(
+              `${notification.title}: ${notification.message.substring(0, 50)}${notification.message.length > 50 ? '...' : ''}`,
+              notification.priority === 'HIGH' || notification.priority === 'URGENT' ? 'warning' : 'info',
+              5000
+            );
           }
         });
       };

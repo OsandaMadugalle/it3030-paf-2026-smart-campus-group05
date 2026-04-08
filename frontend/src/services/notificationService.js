@@ -21,6 +21,11 @@ const notificationService = {
     return response.data;
   },
 
+  clearAllNotifications: async () => {
+    const response = await api.delete('/notifications/clear-all');
+    return response.data;
+  },
+
   sendNotification: async (data) => {
     const response = await api.post('/notifications/send', data);
     return response.data;
@@ -28,6 +33,11 @@ const notificationService = {
 
   sendBulkNotification: async (data) => {
     const response = await api.post('/notifications/send-bulk', data);
+    return response.data;
+  },
+
+  broadcastNotification: async (data) => {
+    const response = await api.post('/notifications/broadcast', data);
     return response.data;
   },
 

@@ -100,6 +100,23 @@
   background-color: #eff6ff;
 }
 
+.clear-all-btn {
+  font-size: 11px;
+  color: #ef4444;
+  background: none;
+  border: 1px solid #fee2e2;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+.clear-all-btn:hover {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
 .dropdown-tabs {
   display: flex;
   padding: 0 16px;
