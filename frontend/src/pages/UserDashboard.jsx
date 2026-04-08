@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
@@ -22,6 +22,7 @@ import IncidentManager from './IncidentManager';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
   const isMobile = useIsMobile();
@@ -29,6 +30,15 @@ const UserDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [loading, setLoading] = useState(true);
+
+  // Auto-switch tab based on notification redirect state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Data states
   const [facilities, setFacilities] = useState([]);

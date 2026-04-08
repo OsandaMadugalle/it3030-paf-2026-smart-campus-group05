@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
@@ -25,6 +25,7 @@ import IncidentManager from './IncidentManager';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
   const isMobile = useIsMobile();
@@ -32,6 +33,15 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+
+  // Auto-switch tab based on notification redirect state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear state to prevent re-switching if user manually navigates
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   React.useEffect(() => {
     // Redirect if bookings tab is selected (if it somehow exists)

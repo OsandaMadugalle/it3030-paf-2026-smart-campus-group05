@@ -70,6 +70,31 @@ const NotificationsPage = () => {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
+  const handleNotificationClick = (n) => {
+    handleMarkAsRead(n.id);
+    if (!n.relatedEntityId) return;
+
+    const role = userInfo?.roles?.[0] || '';
+    const dashboardPath = role === 'ROLE_ADMIN' ? '/dashboard/admin' : 
+                          role === 'ROLE_MODERATOR' ? '/dashboard/moderator' : 
+                          '/dashboard/user';
+
+    switch (n.category) {
+      case 'BOOKING':
+        navigate(dashboardPath, { state: { activeTab: 'requests' } });
+        break;
+      case 'TICKET':
+        navigate(dashboardPath, { state: { activeTab: 'incidents' } });
+        break;
+      case 'ANNOUNCEMENT':
+        navigate(dashboardPath, { state: { activeTab: 'announcements' } });
+        break;
+      default:
+        navigate(dashboardPath);
+        break;
+    }
+  };
+
   const filteredNotifications = notifications.filter(n => {
     const matchesFilter = filter === 'ALL' ? true : 
                          filter === 'UNREAD' ? !n.isRead : 
@@ -198,7 +223,12 @@ const NotificationsPage = () => {
                 <div className="empty-state">No notifications match your criteria</div>
               ) : (
                 filteredNotifications.map(n => (
-                  <div key={n.id} className={`notification-card ${!n.isRead ? 'unread' : ''}`}>
+                  <div 
+                    key={n.id} 
+                    className={`notification-card ${!n.isRead ? 'unread' : ''} priority-${n.priority?.toLowerCase()}`}
+                    onClick={() => handleNotificationClick(n)}
+                    style={{ cursor: n.relatedEntityId ? 'pointer' : 'default' }}
+                  >
                     <div className="card-status-dot"></div>
                     <div className="card-content">
                       <div className="card-top">

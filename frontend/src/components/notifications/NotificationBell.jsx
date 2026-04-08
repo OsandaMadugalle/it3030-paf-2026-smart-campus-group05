@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import { useRole } from '../../hooks/useRole';
 import notificationService from '../../services/notificationService';
 import NotificationDropdown from './NotificationDropdown';
 import './NotificationBell.css';
 
 const NotificationBell = () => {
+  const { getUserInfo } = useRole();
+  const user = getUserInfo();
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [animate, setAnimate] = useState(false);
   const dropdownRef = useRef(null);
+  const stompClient = useRef(null);
 
   const fetchUnreadCount = async () => {
     try {
       const data = await notificationService.getUnreadCount();
       if (data.count > unreadCount) {
-        setAnimate(true);
-        setTimeout(() => setAnimate(false), 500);
+        triggerAnimation();
       }
       setUnreadCount(data.count);
     } catch (error) {
@@ -22,11 +27,68 @@ const NotificationBell = () => {
     }
   };
 
+  const triggerAnimation = () => {
+    setAnimate(true);
+    setTimeout(() => setAnimate(false), 500);
+  };
+
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, [unreadCount]);
+    
+    // Fallback polling (less frequent now)
+    const interval = setInterval(fetchUnreadCount, 60000);
+    
+    // WebSocket Connection
+    if (user && user.id) {
+      const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:8081/api').replace('/api', '');
+      const token = localStorage.getItem('token');
+      
+      const client = new Client({
+        brokerURL: `${baseUrl.replace('http', 'ws')}/ws`,
+        connectHeaders: {
+          'Authorization': `Bearer ${token}`
+        },
+        debug: (str) => {
+          // console.log(str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+      });
+
+      // SockJS fallback if needed
+      client.webSocketFactory = () => {
+        const url = `${baseUrl}/ws?access_token=${token}`;
+        return new SockJS(url);
+      };
+
+      client.onConnect = (frame) => {
+        client.subscribe(`/user/${user.id}/topic/notifications`, (message) => {
+          if (message.body) {
+            const notification = JSON.parse(message.body);
+            console.log('New real-time notification:', notification);
+            setUnreadCount(prev => prev + 1);
+            triggerAnimation();
+          }
+        });
+      };
+
+      client.onStompError = (frame) => {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+      };
+
+      client.activate();
+      stompClient.current = client;
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (stompClient.current) {
+        stompClient.current.deactivate();
+      }
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

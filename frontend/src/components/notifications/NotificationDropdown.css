@@ -131,6 +131,28 @@
   color: #94a3b8;
 }
 
+.notification-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.urgent-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ef4444;
+  text-transform: uppercase;
+}
+
+.notification-item.priority-urgent {
+  border-left: 4px solid #ef4444;
+}
+
+.notification-item.priority-high {
+  border-left: 4px solid #f97316;
+}
+
 .unread-dot {
   width: 8px;
   height: 8px;

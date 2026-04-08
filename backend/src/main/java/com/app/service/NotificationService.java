@@ -7,6 +7,7 @@ import com.app.repository.UserNotificationPreferenceRepository;
 import com.app.repository.UserRepository;
 import com.app.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -24,18 +25,21 @@ public class NotificationService {
     private final NotificationAnalyticsRepository analyticsRepository;
     private final UserRepository userRepository;
     private final SmartNotificationService smartNotificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Autowired
     public NotificationService(NotificationRepository notificationRepository,
                                UserNotificationPreferenceRepository preferenceRepository,
                                NotificationAnalyticsRepository analyticsRepository,
                                UserRepository userRepository,
-                               SmartNotificationService smartNotificationService) {
+                               SmartNotificationService smartNotificationService,
+                               SimpMessagingTemplate messagingTemplate) {
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
         this.analyticsRepository = analyticsRepository;
         this.userRepository = userRepository;
         this.smartNotificationService = smartNotificationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public Notification sendNotification(String userId, String title, String message, NotificationType type, 
@@ -75,7 +79,12 @@ public class NotificationService {
             notification.setDeliveredAt(LocalDateTime.now());
         }
 
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        
+        // Real-time WebSocket notify
+        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+
+        return saved;
     }
 
     private NotificationCategory determineCategory(NotificationType type) {

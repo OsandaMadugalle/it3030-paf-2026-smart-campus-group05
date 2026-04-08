@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useRole } from '../../hooks/useRole';
 import notificationService from '../../services/notificationService';
 import './NotificationDropdown.css';
 
 const NotificationDropdown = ({ onClose, onNotificationRead }) => {
+  const { getUserInfo } = useRole();
+  const userInfo = getUserInfo();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(old => true);
   const [filter, setFilter] = useState('ALL');
@@ -84,6 +87,40 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
     return true;
   });
 
+  const handleNotificationClick = (notification) => {
+    handleMarkAsRead(notification.id);
+    onClose();
+
+    if (!notification.relatedEntityId) return;
+
+    const role = userInfo?.roles?.[0] || '';
+    
+    // Determine the dashboard path based on role
+    const dashboardPath = role === 'ROLE_ADMIN' ? '/dashboard/admin' : 
+                          role === 'ROLE_MODERATOR' ? '/dashboard/moderator' : 
+                          '/dashboard/user';
+
+    switch (notification.category) {
+      case 'BOOKING':
+        if (notification.type.includes('REQUESTED') && (role === 'ROLE_ADMIN' || role === 'ROLE_MODERATOR')) {
+          navigate(dashboardPath, { state: { activeTab: 'requests' } });
+        } else {
+          // For users, or other booking updates
+          navigate(dashboardPath, { state: { activeTab: 'requests' } });
+        }
+        break;
+      case 'TICKET':
+        navigate(dashboardPath, { state: { activeTab: 'incidents' } });
+        break;
+      case 'ANNOUNCEMENT':
+        navigate(dashboardPath, { state: { activeTab: 'announcements' } });
+        break;
+      default:
+        navigate(dashboardPath);
+        break;
+    }
+  };
+
   return (
     <div className="notification-dropdown">
       <div className="dropdown-header">
@@ -108,19 +145,17 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
           filteredNotifications.map(notification => (
             <div 
               key={notification.id}
-              className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
-              onClick={() => {
-                handleMarkAsRead(notification.id);
-                if (notification.relatedEntityId) {
-                  // Navigation logic would go here
-                }
-              }}
+              className={`notification-item ${!notification.isRead ? 'unread' : ''} priority-${notification.priority?.toLowerCase()}`}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="notification-icon">{getIcon(notification.type)}</div>
               <div className="notification-content">
                 <p className="notification-title">{notification.title}</p>
                 <p className="notification-message">{notification.message}</p>
-                <span className="notification-time">{getTimeAgo(notification.createdAt)}</span>
+                <div className="notification-meta">
+                  <span className="notification-time">{getTimeAgo(notification.createdAt)}</span>
+                  {notification.priority === 'URGENT' && <span className="urgent-label">Urgent</span>}
+                </div>
               </div>
               {!notification.isRead && <div className="unread-dot"></div>}
             </div>
