@@ -75,6 +75,7 @@ public class BookingService {
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
         booking.setExpectedAttendees(request.getExpectedAttendees());
+        booking.setDesignation(request.getDesignation());
         booking.setStatus(BookingStatus.PENDING);
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -238,6 +239,7 @@ public class BookingService {
         response.setStartTime(booking.getStartTime());
         response.setEndTime(booking.getEndTime());
         response.setExpectedAttendees(booking.getExpectedAttendees());
+        response.setDesignation(booking.getDesignation());
         response.setStatus(booking.getStatus());
         response.setRejectionReason(booking.getRejectionReason());
         response.setCancellationReason(booking.getCancellationReason());

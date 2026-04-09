@@ -21,6 +21,7 @@ public class BookingResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private Integer expectedAttendees;
+    private String designation;
     private BookingStatus status;
     private String rejectionReason;
     private String cancellationReason;
@@ -130,6 +131,14 @@ public class BookingResponse {
 
     public void setExpectedAttendees(Integer expectedAttendees) {
         this.expectedAttendees = expectedAttendees;
+    }
+
+    public String getDesignation() {
+        return designation;
+    }
+
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 
     public BookingStatus getStatus() {

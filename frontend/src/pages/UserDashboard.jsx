@@ -56,6 +56,7 @@ const UserDashboard = () => {
   // Wizard states (3-step form)
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const [facilitySearch, setFacilitySearch] = useState("");
   const [requestForm, setRequestForm] = useState({
     purpose: "",
     designation: "",
@@ -857,24 +858,65 @@ const UserDashboard = () => {
             >
               Select a Facility
             </h3>
-            {facilities.length === 0 ? (
+
+            <div style={{ marginBottom: "20px", position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search facilities by name or location..."
+                value={facilitySearch}
+                onChange={(e) => setFacilitySearch(e.target.value)}
+                style={{
+                  ...styles.input,
+                  paddingLeft: "40px",
+                  borderRadius: "10px",
+                }}
+              />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#64748B"
+                strokeWidth="2"
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+
+            {facilities.filter(f => 
+              f.name?.toLowerCase().includes(facilitySearch.toLowerCase()) || 
+              f.location?.toLowerCase().includes(facilitySearch.toLowerCase())
+            ).length === 0 ? (
               <EmptyState
                 icon="building"
-                title="No facilities available"
-                message="There are no active facilities available for booking at this time."
+                title={facilitySearch ? "No matching facilities" : "No facilities available"}
+                message={facilitySearch ? `No facilities found matching "${facilitySearch}"` : "There are no active facilities available for booking at this time."}
               />
             ) : (
               <div style={styles.facilitiesGrid}>
-                {facilities.map((facility) => (
-                  <FacilityCard
-                    key={facility.id}
-                    facility={facility}
-                    selectable
-                    selected={selectedFacility?.id === facility.id}
-                    onSelect={handleSelectFacility}
-                    showActions={false}
-                  />
-                ))}
+                {facilities
+                  .filter(f => 
+                    f.name?.toLowerCase().includes(facilitySearch.toLowerCase()) || 
+                    f.location?.toLowerCase().includes(facilitySearch.toLowerCase())
+                  )
+                  .map((facility) => (
+                    <FacilityCard
+                      key={facility.id}
+                      facility={facility}
+                      selectable
+                      selected={selectedFacility?.id === facility.id}
+                      onSelect={handleSelectFacility}
+                      showActions={false}
+                    />
+                  ))
+                }
               </div>
             )}
           </>
@@ -936,39 +978,46 @@ const UserDashboard = () => {
               </div>
 
               <form style={styles.form}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Purpose <span style={{ color: "#EF4444" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={requestForm.purpose}
-                    onChange={(e) =>
-                      handleFormChange("purpose", e.target.value)
-                    }
-                    placeholder="e.g., Team meeting, Workshop, Club event"
-                    style={styles.input}
-                    required
-                  />
-                </div>
+                <div style={styles.formRow}>
+                  <div style={{ ...styles.formGroup, flex: 2 }}>
+                    <label style={styles.label}>
+                      Purpose <span style={{ color: "#EF4444" }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={requestForm.purpose}
+                      onChange={(e) =>
+                        handleFormChange("purpose", e.target.value)
+                      }
+                      placeholder="e.g., Team meeting, Workshop, Club event"
+                      style={styles.input}
+                      required
+                    />
+                  </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Designation <span style={{ color: "#EF4444" }}>*</span>
-                  </label>
-                  <select
-                    value={requestForm.designation}
-                    onChange={(e) =>
-                      handleFormChange("designation", e.target.value)
-                    }
-                    style={styles.select}
-                    required
-                  >
-                    <option value="">Select your designation</option>
-                    <option value="batch_rep">Batch Representative</option>
-                    <option value="lecturer">Lecturer</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div style={{ ...styles.formGroup, flex: 1 }}>
+                    <label style={styles.label}>
+                      Designation <span style={{ color: "#EF4444" }}>*</span>
+                    </label>
+                    <select
+                      value={requestForm.designation}
+                      onChange={(e) =>
+                        handleFormChange("designation", e.target.value)
+                      }
+                      style={styles.select}
+                      required
+                    >
+                      <option value="">Select your designation</option>
+                      <option value="student">Student</option>
+                      <option value="batch_rep">Batch Representative</option>
+                      <option value="lecturer">Lecturer / Faculty</option>
+                      <option value="staff">Staff Member</option>
+                      <option value="club_pres">Club President</option>
+                      <option value="admin">Administrator</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div style={styles.formRow}>
@@ -1008,101 +1057,103 @@ const UserDashboard = () => {
                       <option value="custom">Custom Time Slot</option>
                     </select>
                   </div>
+                </div>
 
-                  {requestForm.timeSlot === "custom" && (
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        Custom Time Slot{" "}
-                        <span style={{ color: "#EF4444" }}>*</span>
-                      </label>
+                {requestForm.timeSlot === "custom" && (
+                  <div style={{ ...styles.formGroup, backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+                    <label style={{ ...styles.label, marginBottom: '12px', display: 'block', fontWeight: '600', color: '#1E293B' }}>
+                      Custom Time Window
+                    </label>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "20px",
+                        alignItems: "center",
+                      }}
+                    >
                       <div
                         style={{
                           display: "flex",
-                          gap: "12px",
-                          alignItems: "center",
+                          flexDirection: "column",
+                          flex: 1,
                         }}
                       >
-                        <div
+                        <label
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            flex: 1,
-                          }}
-                        >
-                          <label
-                            style={{
-                              fontSize: "12px",
-                              color: "#64748B",
-                              marginBottom: "4px",
-                            }}
-                          >
-                            Start Time
-                          </label>
-                          <input
-                            type="time"
-                            value={requestForm.customStartTime}
-                            onChange={(e) =>
-                              handleFormChange(
-                                "customStartTime",
-                                e.target.value,
-                              )
-                            }
-                            style={styles.input}
-                            required={requestForm.timeSlot === "custom"}
-                          />
-                        </div>
-                        <div
-                          style={{
-                            alignSelf: "flex-end",
-                            marginBottom: "8px",
+                            fontSize: "12px",
                             color: "#64748B",
+                            marginBottom: "6px",
                           }}
                         >
-                          to
-                        </div>
-                        <div
+                          Start Time
+                        </label>
+                        <input
+                          type="time"
+                          value={requestForm.customStartTime}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "customStartTime",
+                              e.target.value,
+                            )
+                          }
+                          style={styles.input}
+                          required={requestForm.timeSlot === "custom"}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          color: "#94A3B8",
+                          fontWeight: '600'
+                        }}
+                      >
+                        TO
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          flex: 1,
+                        }}
+                      >
+                        <label
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            flex: 1,
+                            fontSize: "12px",
+                            color: "#64748B",
+                            marginBottom: "6px",
                           }}
                         >
-                          <label
-                            style={{
-                              fontSize: "12px",
-                              color: "#64748B",
-                              marginBottom: "4px",
-                            }}
-                          >
-                            End Time
-                          </label>
-                          <input
-                            type="time"
-                            value={requestForm.customEndTime}
-                            onChange={(e) =>
-                              handleFormChange("customEndTime", e.target.value)
-                            }
-                            style={styles.input}
-                            required={requestForm.timeSlot === "custom"}
-                          />
-                        </div>
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          value={requestForm.customEndTime}
+                          onChange={(e) =>
+                            handleFormChange("customEndTime", e.target.value)
+                          }
+                          style={styles.input}
+                          required={requestForm.timeSlot === "custom"}
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Expected Attendees</label>
-                  <input
-                    type="number"
-                    value={requestForm.attendeeCount}
-                    onChange={(e) =>
-                      handleFormChange("attendeeCount", e.target.value)
-                    }
-                    placeholder="Number of attendees (optional)"
-                    style={styles.input}
-                    min="1"
-                  />
+                <div style={styles.formRow}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Expected Attendees</label>
+                    <input
+                      type="number"
+                      value={requestForm.attendeeCount}
+                      onChange={(e) =>
+                        handleFormChange("attendeeCount", e.target.value)
+                      }
+                      placeholder="e.g., 50"
+                      style={styles.input}
+                      min="1"
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}></div> {/* Spacer for alignment */}
                 </div>
 
                 <div style={styles.formGroup}>
