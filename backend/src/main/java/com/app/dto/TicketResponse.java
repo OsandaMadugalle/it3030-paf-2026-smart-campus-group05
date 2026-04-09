@@ -1,6 +1,7 @@
 package com.app.dto;
 
 import com.app.model.Comment;
+import com.app.model.StatusHistory;
 import com.app.model.Ticket;
 import com.app.model.Ticket.TicketCategory;
 import com.app.model.Ticket.TicketPriority;
@@ -30,6 +31,7 @@ public class TicketResponse {
     private LocalDateTime resolvedAt;
     private List<String> attachments;
     private List<CommentDto> comments;
+    private List<StatusHistoryDto> statusHistory;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -55,12 +57,19 @@ public class TicketResponse {
         r.createdAt       = t.getCreatedAt();
         r.updatedAt       = t.getUpdatedAt();
 
+        // Comments — exclude soft deleted
         r.comments = t.getComments() == null ? List.of() :
             t.getComments().stream()
                 .filter(c -> !c.isDeleted())
                 .map(CommentDto::from)
                 .collect(Collectors.toList());
-
+ 
+        // Status history
+        r.statusHistory = t.getStatusHistory() == null ? List.of() :
+            t.getStatusHistory().stream()
+                .map(StatusHistoryDto::from)
+                .collect(Collectors.toList());
+ 
         return r;
     }
 
@@ -92,6 +101,33 @@ public class TicketResponse {
         public String getAuthorRole() { return authorRole; }
         public LocalDateTime getCreatedAt() { return createdAt; }
         public LocalDateTime getUpdatedAt() { return updatedAt; }
+    }
+
+    public static class StatusHistoryDto {
+        private String fromStatus;
+        private String toStatus;
+        private String changedById;
+        private String changedByName;
+        private String note;
+        private LocalDateTime changedAt;
+ 
+        public static StatusHistoryDto from(StatusHistory h) {
+            StatusHistoryDto dto = new StatusHistoryDto();
+            dto.fromStatus    = h.getFromStatus();
+            dto.toStatus      = h.getToStatus();
+            dto.changedById   = h.getChangedById();
+            dto.changedByName = h.getChangedByName();
+            dto.note          = h.getNote();
+            dto.changedAt     = h.getChangedAt();
+            return dto;
+        }
+ 
+        public String getFromStatus() { return fromStatus; }
+        public String getToStatus() { return toStatus; }
+        public String getChangedById() { return changedById; }
+        public String getChangedByName() { return changedByName; }
+        public String getNote() { return note; }
+        public LocalDateTime getChangedAt() { return changedAt; }
     }
 
     public String getId() {
@@ -147,6 +183,9 @@ public class TicketResponse {
     }
     public List<CommentDto> getComments() {
         return comments; 
+    }
+    public List<StatusHistoryDto> getStatusHistory(){
+        return statusHistory;
     }
     public LocalDateTime getCreatedAt() {
         return createdAt; 

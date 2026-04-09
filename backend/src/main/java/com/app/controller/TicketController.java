@@ -29,29 +29,17 @@ public class TicketController {
     }
 
     // ── POST /api/tickets ─────────────────────────────────────────────────────
-    // Creates a ticket with optional image attachments (multipart)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TicketResponse> createTicket(
             @RequestPart("ticket") @Valid TicketRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal UserPrincipal currentUser) throws IOException {
 
-        TicketResponse created = ticketService.createTicket(request, files, currentUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    // ── PUT /api/tickets/{id} ─────────────────────────────────────────────────
-    @PutMapping("/{id}")
-    public ResponseEntity<TicketResponse> updateTicket(
-            @PathVariable String id,
-            @Valid @RequestBody TicketRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        return ResponseEntity.ok(ticketService.updateTicket(id, request, currentUser));
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ticketService.createTicket(request, files, currentUser));
     }
 
     // ── GET /api/tickets ──────────────────────────────────────────────────────
-    // Admin/Moderator sees all, users see only their own
     @GetMapping
     public ResponseEntity<List<TicketResponse>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
@@ -65,15 +53,12 @@ public class TicketController {
         if (!isAdminOrMod) {
             return ResponseEntity.ok(ticketService.getMyTickets(currentUser.getId()));
         }
-
         if (keyword != null && !keyword.isBlank()) {
             return ResponseEntity.ok(ticketService.searchTickets(keyword));
         }
-
         if (status != null) {
             return ResponseEntity.ok(ticketService.getTicketsByStatus(status));
         }
-
         return ResponseEntity.ok(ticketService.getAllTickets());
     }
 
@@ -91,7 +76,6 @@ public class TicketController {
     }
 
     // ── PATCH /api/tickets/{id}/assign ────────────────────────────────────────
-    // Moderator/Admin assigns themselves as technician → IN_PROGRESS
     @PatchMapping("/{id}/assign")
     public ResponseEntity<TicketResponse> assignTicket(
             @PathVariable String id,
@@ -101,9 +85,7 @@ public class TicketController {
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") ||
                           a.getAuthority().equals("ROLE_MODERATOR"));
 
-        if (!isAdminOrMod) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!isAdminOrMod) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         return ResponseEntity.ok(
             ticketService.assignTicket(id, currentUser.getId(), currentUser.getName())
@@ -111,7 +93,6 @@ public class TicketController {
     }
 
     // ── PATCH /api/tickets/{id}/resolve ───────────────────────────────────────
-    // Moderator/Admin resolves with notes → RESOLVED
     @PatchMapping("/{id}/resolve")
     public ResponseEntity<TicketResponse> resolveTicket(
             @PathVariable String id,
@@ -122,15 +103,12 @@ public class TicketController {
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") ||
                           a.getAuthority().equals("ROLE_MODERATOR"));
 
-        if (!isAdminOrMod) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!isAdminOrMod) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         return ResponseEntity.ok(ticketService.resolveTicket(id, notes, currentUser));
     }
 
     // ── PATCH /api/tickets/{id}/close ─────────────────────────────────────────
-    // Admin closes a resolved ticket → CLOSED
     @PatchMapping("/{id}/close")
     public ResponseEntity<TicketResponse> closeTicket(
             @PathVariable String id,
@@ -139,15 +117,12 @@ public class TicketController {
         boolean isAdmin = currentUser.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!isAdmin) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        return ResponseEntity.ok(ticketService.closeTicket(id));
+        return ResponseEntity.ok(ticketService.closeTicket(id, currentUser));
     }
 
     // ── PATCH /api/tickets/{id}/reject ────────────────────────────────────────
-    // Admin rejects with reason → REJECTED
     @PatchMapping("/{id}/reject")
     public ResponseEntity<TicketResponse> rejectTicket(
             @PathVariable String id,
@@ -157,11 +132,9 @@ public class TicketController {
         boolean isAdmin = currentUser.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!isAdmin) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        return ResponseEntity.ok(ticketService.rejectTicket(id, reason));
+        return ResponseEntity.ok(ticketService.rejectTicket(id, reason, currentUser));
     }
 
     // ── POST /api/tickets/{id}/comments ───────────────────────────────────────
@@ -176,7 +149,6 @@ public class TicketController {
     }
 
     // ── DELETE /api/tickets/{id}/comments/{commentId} ─────────────────────────
-    // Author or Admin can delete
     @DeleteMapping("/{id}/comments/{commentId}")
     public ResponseEntity<TicketResponse> deleteComment(
             @PathVariable String id,
@@ -189,7 +161,6 @@ public class TicketController {
     }
 
     // ── DELETE /api/tickets/{id} ──────────────────────────────────────────────
-    // Admin only
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTicket(
             @PathVariable String id,
@@ -198,9 +169,7 @@ public class TicketController {
         boolean isAdmin = currentUser.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!isAdmin) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         ticketService.deleteTicket(id);
         return ResponseEntity.noContent().build();

@@ -4,11 +4,13 @@ import com.app.dto.CommentRequest;
 import com.app.dto.TicketRequest;
 import com.app.dto.TicketResponse;
 import com.app.model.Comment;
+import com.app.model.StatusHistory;
 import com.app.model.Ticket;
 import com.app.model.Ticket.TicketStatus;
-import com.app.model.Ticket.TicketCategory;
 import com.app.repository.TicketRepository;
 import com.app.security.UserPrincipal;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,16 +22,16 @@ import java.util.stream.Collectors;
 @Service
 public class TicketService {
 
-    private final TicketRepository ticketRepository;
-    private final FileStorageService fileStorageService;
-    private final NotificationService notificationService;
+    private final TicketRepository    ticketRepository;
+    private final FileStorageService  fileStorageService;
+    private final JavaMailSender      mailSender;
 
     public TicketService(TicketRepository ticketRepository,
                          FileStorageService fileStorageService,
-                         NotificationService notificationService) {
+                         JavaMailSender mailSender) {
         this.ticketRepository   = ticketRepository;
         this.fileStorageService = fileStorageService;
-        this.notificationService = notificationService;
+        this.mailSender         = mailSender;
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -49,39 +51,18 @@ public class TicketService {
         ticket.setReporterContact(request.getReporterContact());
         ticket.setStatus(TicketStatus.OPEN);
 
+        // Record initial status in history
+        addHistory(ticket, null, "OPEN", currentUser.getId(),
+                   currentUser.getName(), "Ticket created");
+
         if (files != null && !files.isEmpty()) {
             List<String> paths = fileStorageService.saveAttachments(files);
             ticket.setAttachments(paths);
         }
 
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Admins about new ticket
-        notificationService.sendTicketCreatedNotification(savedTicket);
-
-        return TicketResponse.from(savedTicket);
-    }
-    public TicketResponse updateTicket(String ticketId, TicketRequest request,
-                                       UserPrincipal currentUser) {
-        Ticket ticket = findTicketOrThrow(ticketId);
-
-        if (!ticket.getReporterId().equals(currentUser.getId())) {
-            throw new RuntimeException("You are not allowed to update this ticket");
-        }
-
-        if (ticket.getStatus() != TicketStatus.OPEN) {
-            throw new IllegalStateException("Only OPEN tickets can be edited");
-        }
-
-        ticket.setTitle(request.getTitle());
-        ticket.setDescription(request.getDescription());
-        ticket.setCategory(request.getCategory());
-        ticket.setPriority(request.getPriority());
-        ticket.setLocation(request.getLocation());
-        ticket.setReporterContact(request.getReporterContact());
-
         return TicketResponse.from(ticketRepository.save(ticket));
     }
+
     // ── Read ──────────────────────────────────────────────────────────────────
 
     public List<TicketResponse> getAllTickets() {
@@ -110,6 +91,7 @@ public class TicketService {
 
     // ── Status transitions ────────────────────────────────────────────────────
 
+    // OPEN → IN_PROGRESS
     public TicketResponse assignTicket(String ticketId, String technicianId,
                                        String technicianName) {
         Ticket ticket = findTicketOrThrow(ticketId);
@@ -117,27 +99,20 @@ public class TicketService {
         if (ticket.getStatus() != TicketStatus.OPEN &&
             ticket.getStatus() != TicketStatus.IN_PROGRESS) {
             throw new IllegalStateException(
-                "Cannot assign ticket with status: " + ticket.getStatus()
-            );
+                "Cannot assign ticket with status: " + ticket.getStatus());
         }
 
-        TicketStatus oldStatus = ticket.getStatus();
+        String prev = ticket.getStatus().name();
         ticket.setStatus(TicketStatus.IN_PROGRESS);
         ticket.setAssignedToId(technicianId);
         ticket.setAssignedToName(technicianName);
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Technician about assignment
-        notificationService.sendTicketAssignedNotification(technicianId, savedTicket);
-        
-        // Notify Reporter about status change if status actually changed
-        if (oldStatus != TicketStatus.IN_PROGRESS) {
-            notificationService.sendTicketStatusUpdatedNotification(savedTicket.getReporterId(), savedTicket, oldStatus.name(), savedTicket.getStatus().name());
-        }
+        addHistory(ticket, prev, "IN_PROGRESS", technicianId,
+                   technicianName, "Assigned to " + technicianName);
 
-        return TicketResponse.from(savedTicket);
+        return TicketResponse.from(ticketRepository.save(ticket));
     }
 
+    // IN_PROGRESS → RESOLVED
     public TicketResponse resolveTicket(String ticketId, String resolutionNotes,
                                         UserPrincipal currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
@@ -146,69 +121,77 @@ public class TicketService {
             throw new IllegalStateException("Only IN_PROGRESS tickets can be resolved");
         }
 
-        TicketStatus oldStatus = ticket.getStatus();
+        String prev = ticket.getStatus().name();
         ticket.setStatus(TicketStatus.RESOLVED);
         ticket.setResolutionNotes(resolutionNotes);
         ticket.setResolvedAt(LocalDateTime.now());
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Reporter about resolution
-        notificationService.sendTicketResolvedNotification(savedTicket.getReporterId(), savedTicket, resolutionNotes);
+        addHistory(ticket, prev, "RESOLVED", currentUser.getId(),
+                   currentUser.getName(), resolutionNotes);
 
-        // Notify Admins about the resolution
-        notificationService.sendTicketUpdateToAdmins(savedTicket, "RESOLVED", currentUser.getId());
-        
-        return TicketResponse.from(savedTicket);
+        Ticket saved = ticketRepository.save(ticket);
+
+        // Innovation 3 — send email to reporter on RESOLVED
+        sendStatusEmail(
+            ticket.getReporterContact(),
+            ticket.getReporterName(),
+            ticket.getTitle(),
+            "RESOLVED",
+            "Your ticket has been resolved.\n\nResolution notes: " +
+                (resolutionNotes != null && !resolutionNotes.isBlank()
+                    ? resolutionNotes : "No notes provided."),
+            currentUser.getName()
+        );
+
+        return TicketResponse.from(saved);
     }
 
-    public TicketResponse closeTicket(String ticketId) {
+    // RESOLVED → CLOSED
+    public TicketResponse closeTicket(String ticketId, UserPrincipal currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
 
         if (ticket.getStatus() != TicketStatus.RESOLVED) {
             throw new IllegalStateException("Only RESOLVED tickets can be closed");
         }
 
-        TicketStatus oldStatus = ticket.getStatus();
+        String prev = ticket.getStatus().name();
         ticket.setStatus(TicketStatus.CLOSED);
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Reporter about closure
-        notificationService.sendTicketClosedNotification(savedTicket.getReporterId(), savedTicket);
+        addHistory(ticket, prev, "CLOSED", currentUser.getId(),
+                   currentUser.getName(), "Ticket closed");
 
-        // Notify Assigned Technician if they didn't close it
-        // (Usually moderator/admin closes it)
-        if (savedTicket.getAssignedToId() != null) {
-            notificationService.sendTicketStatusUpdatedNotification(savedTicket.getAssignedToId(), savedTicket, oldStatus.name(), savedTicket.getStatus().name());
-        }
-
-        // Notify Admins
-        notificationService.sendTicketUpdateToAdmins(savedTicket, "CLOSED", null);
-        
-        return TicketResponse.from(savedTicket);
+        return TicketResponse.from(ticketRepository.save(ticket));
     }
 
-    public TicketResponse rejectTicket(String ticketId, String reason) {
+    // Any active → REJECTED
+    public TicketResponse rejectTicket(String ticketId, String reason,
+                                       UserPrincipal currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
 
         if (ticket.getStatus() == TicketStatus.CLOSED ||
             ticket.getStatus() == TicketStatus.REJECTED) {
             throw new IllegalStateException(
-                "Cannot reject a ticket that is already " + ticket.getStatus()
-            );
+                "Cannot reject a ticket that is already " + ticket.getStatus());
         }
 
-        TicketStatus oldStatus = ticket.getStatus();
+        String prev = ticket.getStatus().name();
         ticket.setStatus(TicketStatus.REJECTED);
         ticket.setRejectionReason(reason);
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Reporter about rejection
-        notificationService.sendTicketRejectedNotification(savedTicket.getReporterId(), savedTicket, reason);
+        addHistory(ticket, prev, "REJECTED", currentUser.getId(),
+                   currentUser.getName(), reason);
 
-        // Notify Admins
-        notificationService.sendTicketUpdateToAdmins(savedTicket, "REJECTED", null);
-        
-        return TicketResponse.from(savedTicket);
+        Ticket saved = ticketRepository.save(ticket);
+
+        // Innovation 3 — send email to reporter on REJECTED
+        sendStatusEmail(
+            ticket.getReporterContact(),
+            ticket.getReporterName(),
+            ticket.getTitle(),
+            "REJECTED",
+            "Unfortunately, your ticket has been rejected.\n\nReason: " +
+                (reason != null && !reason.isBlank() ? reason : "No reason provided."),
+            currentUser.getName()
+        );
+
+        return TicketResponse.from(saved);
     }
 
     // ── Comments ──────────────────────────────────────────────────────────────
@@ -216,14 +199,6 @@ public class TicketService {
     public TicketResponse addComment(String ticketId, CommentRequest request,
                                      UserPrincipal currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
-
-        if (ticket.getStatus() == TicketStatus.RESOLVED ||
-            ticket.getStatus() == TicketStatus.CLOSED ||
-            ticket.getStatus() == TicketStatus.REJECTED) {
-            throw new IllegalStateException(
-                "Cannot add comment to a ticket that is " + ticket.getStatus()
-            );
-        }
 
         Comment comment = new Comment();
         comment.setContent(request.getContent());
@@ -237,22 +212,7 @@ public class TicketService {
         );
 
         ticket.getComments().add(comment);
-        Ticket savedTicket = ticketRepository.save(ticket);
-        
-        // Notify Reporter if someone else commented on their ticket
-        if (!savedTicket.getReporterId().equals(currentUser.getId())) {
-            notificationService.sendTicketCommentNotification(savedTicket.getReporterId(), savedTicket, currentUser.getName(), request.getContent());
-        }
-
-        // Notify Assigned Technician if someone else commented
-        if (savedTicket.getAssignedToId() != null && !savedTicket.getAssignedToId().equals(currentUser.getId())) {
-            notificationService.sendTicketCommentNotification(savedTicket.getAssignedToId(), savedTicket, currentUser.getName(), request.getContent());
-        }
-
-        // Notify Admins about the comment (as they should always be in the loop)
-        notificationService.sendTicketCommentToAdmins(savedTicket, currentUser.getName(), request.getContent(), currentUser.getId());
-        
-        return TicketResponse.from(savedTicket);
+        return TicketResponse.from(ticketRepository.save(ticket));
     }
 
     public TicketResponse deleteComment(String ticketId, String commentId,
@@ -283,7 +243,45 @@ public class TicketService {
         ticketRepository.deleteById(ticketId);
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────────
+    // ── Innovation 3: Email helper ────────────────────────────────────────────
+
+    private void sendStatusEmail(String toEmail, String reporterName,
+                                  String ticketTitle, String newStatus,
+                                  String details, String changedBy) {
+        if (toEmail == null || toEmail.isBlank()) return;
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject("[Smart Campus] Your ticket has been " + newStatus);
+            message.setText(
+                "Dear " + reporterName + ",\n\n" +
+                "Your incident ticket \"" + ticketTitle + "\" has been updated.\n\n" +
+                "New Status: " + newStatus + "\n" +
+                details + "\n\n" +
+                "Updated by: " + changedBy + "\n\n" +
+                "You can log in to Smart Campus to view the full details.\n\n" +
+                "Regards,\nSmart Campus Operations Team"
+            );
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Don't let email failure break the status update
+            System.err.println("Failed to send status email: " + e.getMessage());
+        }
+    }
+
+    // ── Status history helper ─────────────────────────────────────────────────
+
+    private void addHistory(Ticket ticket, String from, String to,
+                             String userId, String userName, String note) {
+        StatusHistory entry = new StatusHistory(from, to, userId, userName, note);
+        if (ticket.getStatusHistory() == null) {
+            ticket.setStatusHistory(new java.util.ArrayList<>());
+        }
+        ticket.getStatusHistory().add(entry);
+    }
+
+    // ── Find helper ───────────────────────────────────────────────────────────
 
     private Ticket findTicketOrThrow(String id) {
         return ticketRepository.findById(id)
