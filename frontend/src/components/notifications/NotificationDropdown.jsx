@@ -108,6 +108,7 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
     const adminModToggles = [
       { key: 'bookingRequestedEnabled', label: 'New Booking Requests', icon: '📩' },
       { key: 'ticketCreatedEnabled', label: 'New Incidents/Tickets', icon: '🎫' },
+      { key: 'ticketStatusEnabled', label: 'Ticket Assignments/Updates', icon: '🔄' },
       { key: 'ticketCommentEnabled', label: 'Ticket Comments', icon: '💬' },
       { key: 'systemNotifications', label: 'Emergency Alerts', icon: '🚨' },
     ];

@@ -12,6 +12,9 @@ import java.util.Optional;
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
+    
+    @org.springframework.data.mongodb.repository.Query("{'roles': ?0}")
     List<User> findByRoles(Role role);
+    
     boolean existsByEmail(String email);
 }

@@ -47,12 +47,11 @@ const NotificationBell = () => {
   useEffect(() => {
     fetchUnreadCount();
     fetchPrefs();
-    
-    // Fallback polling (less frequent now)
+    // Fallback polling (more frequent update)
     const interval = setInterval(() => {
       fetchUnreadCount();
       fetchPrefs();
-    }, 60000);
+    }, 15000); // 15 seconds poll for count
     
     // WebSocket Connection
     if (user && user.id) {
@@ -79,18 +78,22 @@ const NotificationBell = () => {
       };
 
       client.onConnect = (frame) => {
+        console.log('Connected to WebSocket');
+        // Clear internal set on reconnect maybe
         client.subscribe(`/user/${user.id}/topic/notifications`, (message) => {
           if (message.body) {
             const notification = JSON.parse(message.body);
-            console.log('New real-time notification:', notification);
+            console.log('New real-time notification received:', notification);
+            
+            // Immediately update unread count state
             setUnreadCount(prev => prev + 1);
             triggerAnimation();
             
             // Show real-time Toast
             showToast(
               `${notification.title}: ${notification.message.substring(0, 50)}${notification.message.length > 50 ? '...' : ''}`,
-              notification.priority === 'HIGH' || notification.priority === 'URGENT' ? 'warning' : 'info',
-              5000
+              notification.priority === 'HIGH' || notification.priority === 'URGENT' || notification.type === 'TICKET_CREATED' ? 'warning' : 'info',
+              6000
             );
           }
         });

@@ -89,14 +89,13 @@ public class NotificationService {
 
         // Specific category toggle check
         boolean enabled = switch (type) {
-            case BOOKING_REQUESTED -> prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled();
+            case BOOKING_REQUESTED -> (prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled()) || isAdminOrMod(userId);
             case BOOKING_APPROVED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
             case BOOKING_REJECTED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
             case BOOKING_CANCELLED -> prefs.isBookingNotifications() && prefs.isBookingCancelledEnabled();
-            case TICKET_CREATED -> prefs.isTicketCreatedEnabled();
-            case TICKET_STATUS_UPDATED, TICKET_ASSIGNED -> prefs.isTicketStatusEnabled();
+            case TICKET_CREATED -> prefs.isTicketCreatedEnabled() || isAdminOrMod(userId);
+            case TICKET_STATUS_UPDATED, TICKET_ASSIGNED, TICKET_RESOLVED, TICKET_CLOSED, TICKET_REJECTED -> prefs.isTicketStatusEnabled();
             case TICKET_COMMENT_ADDED -> prefs.isTicketCommentEnabled();
-            case TICKET_RESOLVED -> prefs.isTicketResolvedEnabled();
             default -> prefs.isSystemNotifications();
         };
 
@@ -201,6 +200,19 @@ public class NotificationService {
                 NotificationPriority.NORMAL, ticket.getId(), "TICKET");
     }
 
+    public void sendTicketUpdateToAdmins(Ticket ticket, String status, String excludeUserId) {
+        String title = String.format("Ticket #%s Update: %s", ticket.getId(), status);
+        String message = String.format("Incident ticket #%s has been marked as %s.", ticket.getId(), status);
+
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
+        for (User admin : admins) {
+            if (excludeUserId == null || !admin.getId().equals(excludeUserId)) {
+                sendNotification(admin.getId(), title, message, NotificationType.TICKET_STATUS_UPDATED,
+                        NotificationPriority.LOW, ticket.getId(), "TICKET");
+            }
+        }
+    }
+
     public void sendTicketResolvedNotification(String userId, Ticket ticket, String resolutionNote) {
         String title = "Ticket Resolved ✅";
         String message = String.format("Your incident ticket #%s for %s has been resolved. Note: %s",
@@ -226,6 +238,21 @@ public class NotificationService {
         
         sendNotification(userId, title, message, NotificationType.TICKET_COMMENT_ADDED,
                 NotificationPriority.NORMAL, ticket.getId(), "TICKET");
+    }
+
+    public void sendTicketCommentToAdmins(Ticket ticket, String commenterName, String commentPreview, String excludeUserId) {
+        String title = "New Comment on Ticket #" + ticket.getId() + " 💬";
+        String message = String.format("%s commented on ticket #%s: %s...",
+                commenterName, ticket.getId(), commentPreview.length() > 50 ? commentPreview.substring(0, 50) : commentPreview);
+
+        List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
+        for (User admin : admins) {
+            // Already handled by Reporter/Assigned logic if they are Admin, but let's be explicitly safe
+            if (!admin.getId().equals(excludeUserId)) {
+                sendNotification(admin.getId(), title, message, NotificationType.TICKET_COMMENT_ADDED,
+                        NotificationPriority.LOW, ticket.getId(), "TICKET");
+            }
+        }
     }
 
     public void sendTicketClosedNotification(String userId, Ticket ticket) {
@@ -276,6 +303,12 @@ public class NotificationService {
                 booking.getResourceName(), booking.getDate());
         sendNotification(userId, "Booking Cancelled", message, NotificationType.BOOKING_CANCELLED, 
                 NotificationPriority.NORMAL, booking.getId(), "BOOKING");
+    }
+
+    private boolean isAdminOrMod(String userId) {
+        return userRepository.findById(userId)
+                .map(user -> user.getRoles().contains(Role.ROLE_ADMIN) || user.getRoles().contains(Role.ROLE_MODERATOR))
+                .orElse(false);
     }
 
     public void broadcastNotification(String title, String message, NotificationPriority priority, String targetRole, UserPrincipal sender) {
