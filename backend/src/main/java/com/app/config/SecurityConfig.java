@@ -59,6 +59,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/ws/**").permitAll() // Allow WebSocket handshake without early filter block
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/moderator/**").hasAnyRole("MODERATOR", "ADMIN")
                 .requestMatchers("/api/user/**").authenticated()

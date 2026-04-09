@@ -72,10 +72,25 @@ const FacilityForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Mapping frontend types to backend enum values
+    const typeMapping = {
+      hall: "LECTURE_HALL",
+      lab: "LAB",
+      sports: "SPORTS",
+      library: "LIBRARY",
+      cafeteria: "CAFETERIA",
+      parking: "PARKING",
+      dormitory: "DORMITORY"
+    };
+
     if (validate()) {
       onSubmit({
         ...formData,
+        type: typeMapping[formData.type] || "LECTURE_HALL",
         capacity: parseInt(formData.capacity),
+        status: formData.status === "active" ? "ACTIVE" : 
+                formData.status === "maintenance" ? "OUT_OF_SERVICE" : "CLOSED"
       });
     }
   };
@@ -284,8 +299,15 @@ const FacilityForm = ({
               type="number"
               value={formData.capacity}
               onChange={(e) => handleChange("capacity", e.target.value)}
+              onKeyDown={(e) => {
+                // Prevent 'e', 'E', '+', '-', and '.' to ensure only whole positive numbers
+                if (["e", "E", "+", "-", "."].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               placeholder="50"
               min="1"
+              step="1"
               style={styles.input(errors.capacity)}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
               onBlur={(e) =>

@@ -22,11 +22,14 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public TicketService(TicketRepository ticketRepository,
-                         FileStorageService fileStorageService) {
+                         FileStorageService fileStorageService,
+                         NotificationService notificationService) {
         this.ticketRepository   = ticketRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -51,7 +54,12 @@ public class TicketService {
             ticket.setAttachments(paths);
         }
 
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Admins about new ticket
+        notificationService.sendTicketCreatedNotification(savedTicket);
+
+        return TicketResponse.from(savedTicket);
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -93,10 +101,21 @@ public class TicketService {
             );
         }
 
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.IN_PROGRESS);
         ticket.setAssignedToId(technicianId);
         ticket.setAssignedToName(technicianName);
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Technician about assignment
+        notificationService.sendTicketAssignedNotification(technicianId, savedTicket);
+        
+        // Notify Reporter about status change if status actually changed
+        if (oldStatus != TicketStatus.IN_PROGRESS) {
+            notificationService.sendTicketStatusUpdatedNotification(savedTicket.getReporterId(), savedTicket, oldStatus.name(), savedTicket.getStatus().name());
+        }
+
+        return TicketResponse.from(savedTicket);
     }
 
     public TicketResponse resolveTicket(String ticketId, String resolutionNotes,
@@ -107,10 +126,16 @@ public class TicketService {
             throw new IllegalStateException("Only IN_PROGRESS tickets can be resolved");
         }
 
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.RESOLVED);
         ticket.setResolutionNotes(resolutionNotes);
         ticket.setResolvedAt(LocalDateTime.now());
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Reporter about resolution
+        notificationService.sendTicketResolvedNotification(savedTicket.getReporterId(), savedTicket, resolutionNotes);
+        
+        return TicketResponse.from(savedTicket);
     }
 
     public TicketResponse closeTicket(String ticketId) {
@@ -120,8 +145,14 @@ public class TicketService {
             throw new IllegalStateException("Only RESOLVED tickets can be closed");
         }
 
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.CLOSED);
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Reporter about closure
+        notificationService.sendTicketClosedNotification(savedTicket.getReporterId(), savedTicket);
+        
+        return TicketResponse.from(savedTicket);
     }
 
     public TicketResponse rejectTicket(String ticketId, String reason) {
@@ -134,9 +165,15 @@ public class TicketService {
             );
         }
 
+        TicketStatus oldStatus = ticket.getStatus();
         ticket.setStatus(TicketStatus.REJECTED);
         ticket.setRejectionReason(reason);
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Reporter about rejection
+        notificationService.sendTicketRejectedNotification(savedTicket.getReporterId(), savedTicket, reason);
+        
+        return TicketResponse.from(savedTicket);
     }
 
     // ── Comments ──────────────────────────────────────────────────────────────
@@ -157,7 +194,14 @@ public class TicketService {
         );
 
         ticket.getComments().add(comment);
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket savedTicket = ticketRepository.save(ticket);
+        
+        // Notify Reporter if someone else commented on their ticket
+        if (!savedTicket.getReporterId().equals(currentUser.getId())) {
+            notificationService.sendTicketCommentNotification(savedTicket.getReporterId(), savedTicket, currentUser.getName(), request.getContent());
+        }
+        
+        return TicketResponse.from(savedTicket);
     }
 
     public TicketResponse deleteComment(String ticketId, String commentId,

@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
 import FacilityCard from '../components/FacilityCard';
 import BookingTable from '../components/BookingTable';
 import ActivityFeed from '../components/ActivityFeed';
+import OccupancyDashboard from '../components/OccupancyDashboard';
 import CSSBarChart from '../components/CSSBarChart';
 import CSSPieChart from '../components/CSSPieChart';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
+import IncidentManager from './IncidentManager';
 
 const ModeratorDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
   const isMobile = useIsMobile();
@@ -25,6 +29,15 @@ const ModeratorDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+
+  // Auto-switch tab based on notification redirect state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Data states
   const [facilities, setFacilities] = useState([]);
@@ -54,24 +67,20 @@ const ModeratorDashboard = () => {
   const [requestPage, setRequestPage] = useState(1);
   
   // Notification states
-  const [notificationTitle, setNotificationTitle] = useState('');
-  const [notificationMessage, setNotificationMessage] = useState('');
-  const [notificationTarget, setNotificationTarget] = useState('all');
-  const [notificationType, setNotificationType] = useState('info');
-  const [sentNotifications, setSentNotifications] = useState([]);
+  // Loading states
+  const [actionLoading, setActionLoading] = useState(false);
   
   // Report states
   const [reportDateRange, setReportDateRange] = useState('week');
-  
-  // Loading states
-  const [actionLoading, setActionLoading] = useState(false);
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'home' },
     { id: 'monitor', label: 'Campus Monitor', icon: 'monitor' },
     { id: 'requests', label: 'Facility Requests', icon: 'file' },
-    { id: 'notifications', label: 'Send Notifications', icon: 'bell' },
+    { id: 'occupancy', label: 'Live Occupancy', icon: 'users' },
+    { id: 'notifications-view', label: 'Notifications Center', icon: 'bell' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
+    { id: 'incidents', label: 'Help Desk / Incidents', icon: 'tool' }
   ];
 
   // Fetch all data
@@ -179,43 +188,6 @@ const ModeratorDashboard = () => {
     }
   };
 
-  // Notification handlers
-  const handleSendNotification = async (e) => {
-    e.preventDefault();
-    if (!notificationTitle.trim() || !notificationMessage.trim()) {
-      showToast('Please fill in all required fields', 'warning');
-      return;
-    }
-    
-    setActionLoading(true);
-    try {
-      await api.post('/notifications', {
-        title: notificationTitle,
-        message: notificationMessage,
-        target: notificationTarget,
-        type: notificationType,
-      });
-      showToast('Notification sent successfully', 'success');
-      setSentNotifications(prev => [{
-        id: Date.now(),
-        title: notificationTitle,
-        message: notificationMessage,
-        target: notificationTarget,
-        type: notificationType,
-        sentAt: new Date().toISOString(),
-        sentBy: userInfo?.name || 'Moderator',
-      }, ...prev]);
-      setNotificationTitle('');
-      setNotificationMessage('');
-      setNotificationTarget('all');
-      setNotificationType('info');
-    } catch (err) {
-      showToast('Failed to send notification', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   // Filtered data
   const filteredFacilities = facilities.filter(f => {
     const matchesType = !facilityTypeFilter || f.type?.toLowerCase() === facilityTypeFilter.toLowerCase();
@@ -266,10 +238,14 @@ const ModeratorDashboard = () => {
     },
     main: {
       flex: 1,
-      marginLeft: isMobile ? 0 : '260px',
-      padding: isMobile ? '80px 16px 24px 16px' : '32px',
-      maxWidth: isMobile ? '100%' : 'calc(100% - 260px)',
+      marginLeft: isMobile ? 0 : '240px',
+      padding: isMobile ? '80px 16px 24px 16px' : '0px',
+      maxWidth: isMobile ? '100%' : 'calc(100% - 240px)',
       transition: 'margin-left 0.3s ease, padding 0.3s ease',
+      minHeight: '100vh',
+    },
+    contentArea: {
+      padding: isMobile ? '0' : '32px',
     },
     header: {
       marginBottom: '32px',
@@ -538,6 +514,15 @@ const ModeratorDashboard = () => {
                 <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
               </svg>
               Send Notification
+            </button>
+            <button
+              style={{ padding: '12px 20px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '14px', fontWeight: '500', color: '#0F172A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setActiveTab('incidents')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+              </svg>
+              Review Pending Tickets
             </button>
           </div>
         </div>
@@ -827,101 +812,6 @@ const ModeratorDashboard = () => {
     );
   };
 
-  // Render Notifications Tab
-  const renderNotifications = () => (
-    <>
-      <div style={styles.header}>
-        <h1 style={styles.greeting}>Send Notifications</h1>
-        <p style={styles.subtitle}>Send notifications to campus users.</p>
-      </div>
-
-      <div style={styles.twoColGrid}>
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Compose Notification</h3>
-          <form style={styles.form} onSubmit={handleSendNotification}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Title <span style={{ color: '#EF4444' }}>*</span></label>
-              <input
-                type="text"
-                value={notificationTitle}
-                onChange={(e) => setNotificationTitle(e.target.value)}
-                placeholder="Notification title"
-                style={styles.input}
-                required
-              />
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Message <span style={{ color: '#EF4444' }}>*</span></label>
-              <textarea
-                value={notificationMessage}
-                onChange={(e) => setNotificationMessage(e.target.value)}
-                placeholder="Write your notification message..."
-                style={styles.textarea}
-                required
-                maxLength={500}
-              />
-              <span style={{ fontSize: '12px', color: '#94A3B8' }}>{notificationMessage.length}/500 characters</span>
-            </div>
-            <div style={styles.formRow}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Target Audience</label>
-                <select
-                  value={notificationTarget}
-                  onChange={(e) => setNotificationTarget(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="all">All Users</option>
-                  <option value="ROLE_USER">Students/Staff Only</option>
-                </select>
-              </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Type</label>
-                <select
-                  value={notificationType}
-                  onChange={(e) => setNotificationType(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="info">Info</option>
-                  <option value="warning">Warning</option>
-                  <option value="alert">Alert</option>
-                </select>
-              </div>
-            </div>
-            <button
-              type="submit"
-              style={{ ...styles.submitBtn, opacity: actionLoading ? 0.7 : 1 }}
-              disabled={actionLoading}
-            >
-              {actionLoading ? 'Sending...' : 'Send Notification'}
-            </button>
-          </form>
-        </div>
-
-        <div style={styles.card}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>Recently Sent</h3>
-          {sentNotifications.length === 0 ? (
-            <EmptyState icon="bell" title="No notifications sent" message="Notifications you send will appear here." />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {sentNotifications.slice(0, 5).map((notif, index) => (
-                <div key={notif.id || index} style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', borderLeft: '3px solid #2563EB' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <p style={{ fontWeight: '500', fontSize: '14px' }}>{notif.title}</p>
-                    <StatusBadge status={notif.type || 'info'} size="sm" />
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '4px' }}>{notif.message}</p>
-                  <p style={{ fontSize: '11px', color: '#94A3B8' }}>
-                    Sent to {notif.target === 'all' ? 'All Users' : notif.target} • {new Date(notif.sentAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-
   // Render Reports Tab
   const renderReports = () => (
     <>
@@ -983,6 +873,16 @@ const ModeratorDashboard = () => {
     </>
   );
 
+  const renderOccupancy = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>Live Occupancy</h1>
+        <p style={styles.subtitle}>Real-time view of all campus facilities. Auto-refreshes every 30 seconds.</p>
+      </div>
+      <OccupancyDashboard />
+    </>
+  );
+
   const renderContent = () => {
     if (loading && activeTab === 'overview') {
       return (
@@ -996,8 +896,9 @@ const ModeratorDashboard = () => {
       case 'overview': return renderOverview();
       case 'monitor': return renderMonitor();
       case 'requests': return renderRequests();
-      case 'notifications': return renderNotifications();
+      case 'occupancy': return renderOccupancy();
       case 'reports': return renderReports();
+      case 'incidents': return <IncidentManager />;
       default: return renderOverview();
     }
   };
@@ -1009,12 +910,27 @@ const ModeratorDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
       <main style={styles.main}>
-        {renderContent()}
+        {!isMobile && (
+          <Navbar 
+            title={navItems.find(item => item.id === activeTab)?.label || 'Moderator Dashboard'} 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
+          />
+        )}
+        <div style={styles.contentArea}>
+          {renderContent()}
+        </div>
       </main>
     </div>
   );

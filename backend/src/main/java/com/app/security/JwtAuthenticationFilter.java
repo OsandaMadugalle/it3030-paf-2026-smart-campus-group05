@@ -64,6 +64,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+        
+        // Support for WebSocket auth via query param
+        String accessToken = request.getParameter("access_token");
+        if (StringUtils.hasText(accessToken)) {
+            return accessToken;
+        }
+        
         return null;
     }
 }

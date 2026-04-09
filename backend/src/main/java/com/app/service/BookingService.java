@@ -36,6 +36,9 @@ public class BookingService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public BookingResponse createBooking(BookingRequest request, UserPrincipal userPrincipal) {
         // Validate date is future
         if (request.getDate().isBefore(LocalDate.now())) {
@@ -76,8 +79,8 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Trigger notification (placeholder)
-        // TODO: Implement notification service
+        // Notify Admins and Moderators
+        notificationService.sendBookingRequestNotification(savedBooking);
 
         return mapToResponse(savedBooking);
     }
@@ -130,8 +133,8 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Trigger notification (placeholder)
-        // TODO: Implement notification service
+        // Notify user about approval
+        notificationService.sendBookingApprovedNotification(savedBooking.getRequestedBy(), savedBooking);
 
         return mapToResponse(savedBooking);
     }
@@ -145,7 +148,7 @@ public class BookingService {
         }
 
         if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-            throw new InvalidBookingStateException("Rejection reason is required");
+            throw new IllegalArgumentException("Rejection reason is required");
         }
 
         booking.setStatus(BookingStatus.REJECTED);
@@ -156,8 +159,8 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Trigger notification (placeholder)
-        // TODO: Implement notification service
+        // Notify user about rejection
+        notificationService.sendBookingRejectedNotification(savedBooking.getRequestedBy(), savedBooking, request.getReason());
 
         return mapToResponse(savedBooking);
     }
@@ -187,8 +190,8 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Trigger notification (placeholder)
-        // TODO: Implement notification service
+        // Notify user about cancellation
+        notificationService.sendBookingCancelledNotification(savedBooking.getRequestedBy(), savedBooking);
 
         return mapToResponse(savedBooking);
     }
@@ -212,7 +215,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getBookingsByResource(String resourceId) {
-        List<Booking> bookings = bookingRepository.findByResourceIdAndDate(resourceId, LocalDate.now());
+        List<Booking> bookings = bookingRepository.findByResourceId(resourceId);
         return bookings.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 

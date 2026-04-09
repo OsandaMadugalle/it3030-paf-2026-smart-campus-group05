@@ -226,13 +226,6 @@ const Sidebar = ({ navItems, userInfo, onLogout, activeItem, onNavClick, isOpen,
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
         );
-      case 'megaphone':
-        return (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m3 11 18-5v12L3 13v-2z"></path>
-            <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
-          </svg>
-        );
       case 'chart':
         return (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -256,6 +249,35 @@ const Sidebar = ({ navItems, userInfo, onLogout, activeItem, onNavClick, isOpen,
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        );
+      case 'hammer-wrench':
+      case 'tool':
+        return (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a2 2 0 0 1-2.14-.11 2 2 0 0 1-1.34-1.34 2 2 0 0 1-.11-2.14l-3.28 3.28ZM10.2 13.8a1 1 0 0 1 0-1.4l-1.6-1.6a1 1 0 0 1 0-1.4l3.77-3.77a2 2 0 0 1 2.14.11 2 2 0 0 1 1.34 1.34 2 2 0 0 1 .11 2.14l3.28-3.28a1 1 0 0 1 0 1.4l-3.77 3.77a1 1 0 0 1-1.4 0l-1.6-1.6a1 1 0 0 1-1.4 0l-3.77 3.77a2 2 0 0 1-2.14-.11 2 2 0 0 1-1.34-1.34 2 2 0 0 1-.11-2.14l-3.28 3.28a1 1 0 0 1 0-1.4l3.77-3.77Z"></path>
+            <path d="m2 22 5-5"></path>
+            <path d="M9.5 14.5 16 21"></path>
+          </svg>
+        );
+      case 'qr':
+        return (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M7 7h.01"></path>
+            <path d="M17 7h.01"></path>
+            <path d="M17 17h.01"></path>
+            <path d="M7 17h.01"></path>
+          </svg>
+        );
+      case 'user':
+        return (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
           </svg>
         );
       case 'request':

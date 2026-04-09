@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import StatCard from '../components/StatCard';
 import UserTable from '../components/UserTable';
 import StatusBadge from '../components/StatusBadge';
@@ -19,9 +20,12 @@ import ConfirmModal from '../components/ConfirmModal';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner, { SkeletonCard } from '../components/LoadingSpinner';
 import { showToast } from '../components/Toast';
+import IncidentManager from './IncidentManager';
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { getUserInfo } = useRole();
   const userInfo = getUserInfo();
   const isMobile = useIsMobile();
@@ -29,6 +33,15 @@ const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
+
+  // Auto-switch tab based on notification redirect state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clear state to prevent re-switching if user manually navigates
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   React.useEffect(() => {
     // Redirect if bookings tab is selected (if it somehow exists)
@@ -106,10 +119,10 @@ const AdminDashboard = () => {
     { id: 'facilities', label: 'Facilities Management', icon: 'building' },
     { id: 'requests', label: 'Requests Overview', icon: 'file' },
     { id: 'users', label: 'Users & Roles', icon: 'users' },
-    { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
+    { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
-    { id: 'notifications', label: 'Notifications', icon: 'bell' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
+    { id: 'settings', label: 'Settings', icon: 'settings' }
   ];
 
   // Fetch all data
@@ -212,7 +225,7 @@ const AdminDashboard = () => {
       setEditingFacility(null);
       fetchData();
     } catch (err) {
-      showToast('Failed to save facility', 'error');
+      showToast('failed to save facility', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -472,10 +485,14 @@ const AdminDashboard = () => {
     },
     main: {
       flex: 1,
-      marginLeft: isMobile ? 0 : '260px',
-      padding: isMobile ? '80px 16px 24px 16px' : '32px',
-      maxWidth: isMobile ? '100%' : 'calc(100% - 260px)',
+      marginLeft: isMobile ? 0 : '240px',
+      padding: isMobile ? '80px 16px 24px 16px' : '0px',
+      maxWidth: isMobile ? '100%' : 'calc(100% - 240px)',
       transition: 'margin-left 0.3s ease, padding 0.3s ease',
+      minHeight: '100vh',
+    },
+    contentArea: {
+      padding: isMobile ? '0' : '32px',
     },
     header: {
       marginBottom: '32px',
@@ -757,6 +774,15 @@ const AdminDashboard = () => {
               </svg>
               Manage Users
             </button>
+            <button
+              style={styles.quickActionBtn}
+              onClick={() => setActiveTab('incidents')}
+            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            Manage Incident Tickets
+          </button>
           </div>
         </div>
       </div>
@@ -1678,6 +1704,7 @@ const AdminDashboard = () => {
       case 'reports': return renderReports();
       case 'notifications': return renderNotifications();
       case 'settings': return renderSettings();
+      case 'incidents': return <IncidentManager />;
       default: return renderOverview();
     }
   };
@@ -1689,12 +1716,27 @@ const AdminDashboard = () => {
         userInfo={userInfo}
         onLogout={handleLogout}
         activeItem={activeTab}
-        onNavClick={setActiveTab}
+        onNavClick={(id) => {
+          if (id === 'notifications-view') {
+            navigate('/notifications');
+          } else {
+            setActiveTab(id);
+          }
+        }}
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
       <main style={styles.main}>
-        {renderContent()}
+        {!isMobile && (
+          <Navbar 
+            title={navItems.find(item => item.id === activeTab)?.label || 'Admin Dashboard'} 
+            userInfo={userInfo} 
+            onLogout={handleLogout} 
+          />
+        )}
+        <div style={styles.contentArea}>
+          {renderContent()}
+        </div>
       </main>
     </div>
   );
