@@ -77,11 +77,11 @@ const FacilityForm = ({
     const typeMapping = {
       hall: "LECTURE_HALL",
       lab: "LAB",
-      sports: "LECTURE_HALL", // Closest match in current backend Enum
-      library: "MEETING_ROOM", // Closest match in current backend Enum
-      cafeteria: "LECTURE_HALL", // Closest match in current backend Enum
-      parking: "EQUIPMENT", // Closest match in current backend Enum
-      dormitory: "LECTURE_HALL" // Closest match in current backend Enum
+      sports: "SPORTS",
+      library: "LIBRARY",
+      cafeteria: "CAFETERIA",
+      parking: "PARKING",
+      dormitory: "DORMITORY"
     };
 
     if (validate()) {
@@ -299,8 +299,15 @@ const FacilityForm = ({
               type="number"
               value={formData.capacity}
               onChange={(e) => handleChange("capacity", e.target.value)}
+              onKeyDown={(e) => {
+                // Prevent 'e', 'E', '+', '-', and '.' to ensure only whole positive numbers
+                if (["e", "E", "+", "-", "."].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               placeholder="50"
               min="1"
+              step="1"
               style={styles.input(errors.capacity)}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
               onBlur={(e) =>
