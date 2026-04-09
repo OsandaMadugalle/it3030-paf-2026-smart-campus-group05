@@ -14,47 +14,38 @@ const AIPrioritySuggestor = ({ title, description, onSuggest }) => {
   const [suggested, setSuggested] = useState(null);
 
   const getSuggestion = async () => {
+    // 1. Validation before calling the API
     if (!title.trim() && !description.trim()) {
       showToast('Please enter a title and description first', 'warning');
       return;
     }
+
     setLoading(true);
     setSuggested(null);
+
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 100,
-          messages: [{
-            role: 'user',
-            content: `You are a facilities management assistant. Based on this incident report, suggest the most appropriate priority level.
-
-Title: ${title}
-Description: ${description}
-
-Reply with ONLY one word — exactly one of: LOW, MEDIUM, HIGH, CRITICAL
-
-Rules:
-- CRITICAL: safety hazard, no electricity/water, server room issues, fire/flood risk
-- HIGH: major equipment failure, affects many people, urgent repair needed
-- MEDIUM: equipment not working properly, moderate inconvenience
-- LOW: minor cosmetic issues, low impact, can wait
-
-Your answer (one word only):`
-          }]
-        })
+      /**
+       * We call YOUR Spring Boot backend now. 
+       * 'api' is your axios instance which already has the base URL 
+       * and the JWT token attached.
+       */
+      const response = await api.post('/tickets/analyze-priority', {
+        title: title,
+        description: description
       });
 
-      const data = await response.json();
-      const raw = data.content?.[0]?.text?.trim().toUpperCase();
-      const valid = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-      const priority = valid.includes(raw) ? raw : 'MEDIUM';
+      // The backend returns the string directly (e.g., "HIGH", "CRITICAL")
+      const priority = response.data;
+      
+      // Update UI state
       setSuggested(priority);
+      
+      // Update the parent form data
       onSuggest(priority);
+      
     } catch (err) {
-      showToast('AI suggestion failed — try again', 'error');
+      console.error("AI Priority Error:", err);
+      showToast('AI suggestion failed — check backend or API key', 'error');
     } finally {
       setLoading(false);
     }
