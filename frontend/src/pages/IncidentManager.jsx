@@ -132,7 +132,7 @@ Your answer (one word only):`
   );
 };
 
-// ── Innovation 2: Status Timeline ────────────────────────────────────────────
+//  Innovation 2: Status Timeline : Tested and working
 const StatusTimeline = ({ history, createdAt, reporterName }) => {
   const statusColors = {
     OPEN:        { bg: '#DBEAFE', color: '#1D4ED8', dot: '#2563EB' },
