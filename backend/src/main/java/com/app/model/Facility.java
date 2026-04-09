@@ -56,7 +56,12 @@ public class Facility {
         LECTURE_HALL,
         LAB,
         MEETING_ROOM,
-        EQUIPMENT // projectors, cameras, etc.
+        EQUIPMENT, // projectors, cameras, etc.
+        SPORTS,
+        LIBRARY,
+        CAFETERIA,
+        PARKING,
+        DORMITORY
     }
 
     public enum FacilityStatus {
