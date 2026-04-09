@@ -154,6 +154,9 @@ public class TicketService {
         
         // Notify Reporter about resolution
         notificationService.sendTicketResolvedNotification(savedTicket.getReporterId(), savedTicket, resolutionNotes);
+
+        // Notify Admins about the resolution
+        notificationService.sendTicketUpdateToAdmins(savedTicket, "RESOLVED", currentUser.getId());
         
         return TicketResponse.from(savedTicket);
     }
@@ -171,6 +174,15 @@ public class TicketService {
         
         // Notify Reporter about closure
         notificationService.sendTicketClosedNotification(savedTicket.getReporterId(), savedTicket);
+
+        // Notify Assigned Technician if they didn't close it
+        // (Usually moderator/admin closes it)
+        if (savedTicket.getAssignedToId() != null) {
+            notificationService.sendTicketStatusUpdatedNotification(savedTicket.getAssignedToId(), savedTicket, oldStatus.name(), savedTicket.getStatus().name());
+        }
+
+        // Notify Admins
+        notificationService.sendTicketUpdateToAdmins(savedTicket, "CLOSED", null);
         
         return TicketResponse.from(savedTicket);
     }
@@ -192,6 +204,9 @@ public class TicketService {
         
         // Notify Reporter about rejection
         notificationService.sendTicketRejectedNotification(savedTicket.getReporterId(), savedTicket, reason);
+
+        // Notify Admins
+        notificationService.sendTicketUpdateToAdmins(savedTicket, "REJECTED", null);
         
         return TicketResponse.from(savedTicket);
     }
@@ -228,6 +243,14 @@ public class TicketService {
         if (!savedTicket.getReporterId().equals(currentUser.getId())) {
             notificationService.sendTicketCommentNotification(savedTicket.getReporterId(), savedTicket, currentUser.getName(), request.getContent());
         }
+
+        // Notify Assigned Technician if someone else commented
+        if (savedTicket.getAssignedToId() != null && !savedTicket.getAssignedToId().equals(currentUser.getId())) {
+            notificationService.sendTicketCommentNotification(savedTicket.getAssignedToId(), savedTicket, currentUser.getName(), request.getContent());
+        }
+
+        // Notify Admins about the comment (as they should always be in the loop)
+        notificationService.sendTicketCommentToAdmins(savedTicket, currentUser.getName(), request.getContent(), currentUser.getId());
         
         return TicketResponse.from(savedTicket);
     }
