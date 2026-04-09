@@ -1008,11 +1008,11 @@ const AdminDashboard = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>User</label>
-                  <p style={{ fontWeight: '500' }}>{selectedRequest.user?.name || 'Unknown'}</p>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.requestedByName || selectedRequest.user?.name || 'Unknown'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Facility</label>
-                  <p style={{ fontWeight: '500' }}>{selectedRequest.facility?.name || 'N/A'}</p>
+                  <p style={{ fontWeight: '500' }}>{selectedRequest.resourceName || selectedRequest.facility?.name || 'N/A'}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Purpose</label>
@@ -1021,12 +1021,17 @@ const AdminDashboard = () => {
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Designation</label>
                   <p>{selectedRequest.designation === 'batch_rep' ? 'Batch Representative' :
-                      selectedRequest.designation === 'lecturer' ? 'Lecturer' :
-                      selectedRequest.designation === 'other' ? 'Other' : '-'}</p>
+                      selectedRequest.designation === 'lecturer' ? 'Lecturer / Faculty' :
+                      selectedRequest.designation === 'student' ? 'Student' :
+                      selectedRequest.designation === 'staff' ? 'Staff Member' :
+                      selectedRequest.designation === 'club_pres' ? 'Club President' :
+                      selectedRequest.designation === 'admin' ? 'Administrator' :
+                      selectedRequest.designation === 'moderator' ? 'Moderator' :
+                      selectedRequest.designation === 'other' ? 'Other' : (selectedRequest.designation || '-')}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Preferred Date</label>
-                  <p>{selectedRequest.preferredDate ? new Date(selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
+                  <p>{(selectedRequest.date || selectedRequest.preferredDate) ? new Date(selectedRequest.date || selectedRequest.preferredDate).toLocaleDateString() : '-'}</p>
                 </div>
               </div>
               

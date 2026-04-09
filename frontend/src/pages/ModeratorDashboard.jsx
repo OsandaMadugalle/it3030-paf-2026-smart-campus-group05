@@ -743,8 +743,13 @@ const ModeratorDashboard = () => {
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Designation</label>
                   <p>{selectedRequest.designation === 'batch_rep' ? 'Batch Representative' :
-                      selectedRequest.designation === 'lecturer' ? 'Lecturer' :
-                      selectedRequest.designation === 'other' ? 'Other' : '-'}</p>
+                      selectedRequest.designation === 'lecturer' ? 'Lecturer / Faculty' :
+                      selectedRequest.designation === 'student' ? 'Student' :
+                      selectedRequest.designation === 'staff' ? 'Staff Member' :
+                      selectedRequest.designation === 'club_pres' ? 'Club President' :
+                      selectedRequest.designation === 'admin' ? 'Administrator' :
+                      selectedRequest.designation === 'moderator' ? 'Moderator' :
+                      selectedRequest.designation === 'other' ? 'Other' : (selectedRequest.designation || '-')}</p>
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', color: '#64748B' }}>Preferred Date</label>

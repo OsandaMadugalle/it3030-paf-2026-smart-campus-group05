@@ -40,6 +40,8 @@ public class Booking {
     @NotBlank(message = "Requested by email is required")
     private String requestedByEmail;
 
+    private String designation;
+
     @NotBlank(message = "Purpose is required")
     private String purpose;
 
@@ -133,6 +135,14 @@ public class Booking {
 
     public void setRequestedByEmail(String requestedByEmail) {
         this.requestedByEmail = requestedByEmail;
+    }
+
+    public String getDesignation() {
+        return designation;
+    }
+
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 
     public String getPurpose() {

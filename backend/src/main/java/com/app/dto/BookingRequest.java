@@ -28,6 +28,8 @@ public class BookingRequest {
     @Min(value = 1, message = "Expected attendees must be at least 1")
     private Integer expectedAttendees;
 
+    private String designation;
+
     private String notes;
 
     // Getters and Setters
@@ -77,6 +79,14 @@ public class BookingRequest {
 
     public void setExpectedAttendees(Integer expectedAttendees) {
         this.expectedAttendees = expectedAttendees;
+    }
+
+    public String getDesignation() {
+        return designation;
+    }
+
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 
     public String getNotes() {
