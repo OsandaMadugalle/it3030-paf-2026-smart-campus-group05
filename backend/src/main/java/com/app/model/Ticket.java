@@ -60,6 +60,9 @@ public class Ticket {
     // Embedded comments
     private List<Comment> comments = new ArrayList<>();
 
+    // Status history for audit trail
+    private List<StatusHistory> statusHistory = new ArrayList<>();
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -151,6 +154,9 @@ public class Ticket {
 
     public List<Comment> getComments() { return comments; }
     public void setComments(List<Comment> comments) { this.comments = comments; }
+
+    public List<StatusHistory> getStatusHistory() { return statusHistory; }
+    public void setStatusHistory(List<StatusHistory> statusHistory) { this.statusHistory = statusHistory; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
