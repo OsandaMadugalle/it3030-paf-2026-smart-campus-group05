@@ -72,10 +72,25 @@ const FacilityForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Mapping frontend types to backend enum values
+    const typeMapping = {
+      hall: "LECTURE_HALL",
+      lab: "LAB",
+      sports: "LECTURE_HALL", // Closest match in current backend Enum
+      library: "MEETING_ROOM", // Closest match in current backend Enum
+      cafeteria: "LECTURE_HALL", // Closest match in current backend Enum
+      parking: "EQUIPMENT", // Closest match in current backend Enum
+      dormitory: "LECTURE_HALL" // Closest match in current backend Enum
+    };
+
     if (validate()) {
       onSubmit({
         ...formData,
+        type: typeMapping[formData.type] || "LECTURE_HALL",
         capacity: parseInt(formData.capacity),
+        status: formData.status === "active" ? "ACTIVE" : 
+                formData.status === "maintenance" ? "OUT_OF_SERVICE" : "CLOSED"
       });
     }
   };
