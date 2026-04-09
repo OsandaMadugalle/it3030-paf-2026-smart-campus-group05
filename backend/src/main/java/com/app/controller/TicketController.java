@@ -40,6 +40,16 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // ── PUT /api/tickets/{id} ─────────────────────────────────────────────────
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponse> updateTicket(
+            @PathVariable String id,
+            @Valid @RequestBody TicketRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+
+        return ResponseEntity.ok(ticketService.updateTicket(id, request, currentUser));
+    }
+
     // ── GET /api/tickets ──────────────────────────────────────────────────────
     // Admin/Moderator sees all, users see only their own
     @GetMapping

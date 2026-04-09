@@ -26,6 +26,7 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
   const [formData, setFormData] = useState({ 
     title: '', description: '', category: 'OTHER', priority: 'MEDIUM', location: '', reporterContact: userInfo?.email || '' 
   });
+  const [editingTicketId, setEditingTicketId] = useState(null);
   const [files, setFiles] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -54,6 +55,22 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
   const handleRaiseTicket = async (e) => {
     e.preventDefault();
     setActionLoading(true);
+
+    if (editingTicketId) {
+      try {
+        await api.put(`/tickets/${editingTicketId}`, formData);
+        showToast("Ticket updated successfully", "success");
+        setShowCreateModal(false);
+        setEditingTicketId(null);
+        fetchTickets();
+      } catch (err) {
+        showToast("Error updating ticket", "error");
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
     const data = new FormData();
     // Ensure email is set as reporterContact
     const payload = { ...formData, reporterContact: userInfo.email };
@@ -108,6 +125,19 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
     finally { setActionLoading(false); }
   };
 
+  const handleEditTicket = (t) => {
+    setFormData({
+      title: t.title,
+      description: t.description,
+      category: t.category,
+      priority: t.priority,
+      location: t.location,
+      reporterContact: t.reporterContact
+    });
+    setEditingTicketId(t.id);
+    setShowCreateModal(true);
+  };
+
   const filteredTickets = tickets.filter(t => 
     (filterStatus === '' || t.status === filterStatus) &&
     (t.title.toLowerCase().includes(searchTerm.toLowerCase()) || t.location?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -156,7 +186,17 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
             <div key={t.id} style={styles.card} onClick={() => setSelectedTicket(t)} onMouseOver={e => e.currentTarget.style.transform='translateY(-3px)'} onMouseOut={e => e.currentTarget.style.transform='translateY(0)'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <StatusBadge status={t.status} />
-                <StatusBadge status={t.priority} size="sm" />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {t.status === 'OPEN' && t.reporterId === userInfo?.id && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleEditTicket(t); }} 
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#2563EB', fontSize: '12px', fontWeight: '600' }}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <StatusBadge status={t.priority} size="sm" />
+                </div>
               </div>
               <h4 style={{ fontWeight: '700', fontSize: '16px', marginBottom: '4px' }}>{t.title}</h4>
               <p style={{ fontSize: '13px', color: '#64748B' }}>{t.location} • {new Date(t.createdAt).toLocaleDateString()}</p>
@@ -204,10 +244,18 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
                     </div>
                   ))}
                 </div>
-                <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                  <input style={styles.input} placeholder="Post a comment or update..." value={commentText} onChange={e => setCommentText(e.target.value)} />
-                  <button type="submit" style={{ ...styles.btnPrimary, whiteSpace: 'nowrap' }}>Post</button>
-                </form>
+                {['RESOLVED', 'CLOSED', 'REJECTED'].includes(selectedTicket.status) ? (
+                  <div style={{ marginTop: '15px', padding: '12px', background: '#FEE2E2', borderRadius: '10px', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#DC2626', fontSize: '13px', fontWeight: '600' }}>
+                      Ticket is {selectedTicket.status}. Further replies are disabled.
+                    </span>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                    <input style={styles.input} placeholder="Post a comment or update..." value={commentText} onChange={e => setCommentText(e.target.value)} />
+                    <button type="submit" style={{ ...styles.btnPrimary, whiteSpace: 'nowrap' }}>Post</button>
+                  </form>
+                )}
               </div>
             </div>
 
@@ -261,34 +309,72 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
       </Modal>
 
       {/* RAISE TICKET MODAL */}
-      <Modal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); onModalClose(); }} title="Raise Incident Ticket">
+      <Modal 
+        isOpen={showCreateModal} 
+        onClose={() => { 
+          setShowCreateModal(false); 
+          setEditingTicketId(null);
+          setFormData({ 
+            title: '', description: '', category: 'OTHER', priority: 'MEDIUM', location: '', reporterContact: userInfo?.email || '' 
+          });
+          onModalClose(); 
+        }} 
+        title={editingTicketId ? "Edit Incident Ticket" : "Raise Incident Ticket"}
+      >
          <form onSubmit={handleRaiseTicket} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={styles.label}>Title</label>
-              <input style={styles.input} placeholder="e.g. Broken AC in Lab 01" onChange={e => setFormData({...formData, title: e.target.value})} required />
+              <input 
+                style={styles.input} 
+                value={formData.title}
+                placeholder="e.g. Broken AC in Lab 01" 
+                onChange={e => setFormData({...formData, title: e.target.value})} 
+                required 
+              />
             </div>
             <div>
               <label style={styles.label}>Description</label>
-              <textarea style={{ ...styles.input, minHeight: '100px' }} placeholder="Please describe the issue..." onChange={e => setFormData({...formData, description: e.target.value})} required />
+              <textarea 
+                style={{ ...styles.input, minHeight: '100px' }} 
+                value={formData.description}
+                placeholder="Please describe the issue..." 
+                onChange={e => setFormData({...formData, description: e.target.value})} 
+                required 
+              />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={styles.label}>Location</label>
-                <input style={styles.input} placeholder="Room / Block" onChange={e => setFormData({...formData, location: e.target.value})} required />
+                <input 
+                  style={styles.input} 
+                  value={formData.location}
+                  placeholder="Room / Block" 
+                  onChange={e => setFormData({...formData, location: e.target.value})} 
+                  required 
+                />
               </div>
               <div>
                 <label style={styles.label}>Priority</label>
-                <select style={styles.input} onChange={e => setFormData({...formData, priority: e.target.value})}>
-                  <option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option>
+                <select 
+                  style={styles.input} 
+                  value={formData.priority}
+                  onChange={e => setFormData({...formData, priority: e.target.value})}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
                 </select>
               </div>
             </div>
-            <div>
-              <label style={styles.label}>Attachments (Max 3 Images)</label>
-              <input type="file" multiple accept="image/*" onChange={e => setFiles(Array.from(e.target.files).slice(0,3))} style={{marginTop:'5px'}} />
-            </div>
+            {!editingTicketId && (
+              <div>
+                <label style={styles.label}>Attachments (Max 3 Images)</label>
+                <input type="file" multiple accept="image/*" onChange={e => setFiles(Array.from(e.target.files).slice(0,3))} style={{marginTop:'5px'}} />
+              </div>
+            )}
             <button type="submit" style={{ ...styles.btnPrimary, height: '48px', fontSize: '16px' }} disabled={actionLoading}>
-              {actionLoading ? "Raising Ticket..." : "Raise Ticket"}
+              {actionLoading ? "Processing..." : (editingTicketId ? "Update Ticket" : "Raise Ticket")}
             </button>
          </form>
       </Modal>

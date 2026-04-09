@@ -61,7 +61,27 @@ public class TicketService {
 
         return TicketResponse.from(savedTicket);
     }
+    public TicketResponse updateTicket(String ticketId, TicketRequest request,
+                                       UserPrincipal currentUser) {
+        Ticket ticket = findTicketOrThrow(ticketId);
 
+        if (!ticket.getReporterId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not allowed to update this ticket");
+        }
+
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new IllegalStateException("Only OPEN tickets can be edited");
+        }
+
+        ticket.setTitle(request.getTitle());
+        ticket.setDescription(request.getDescription());
+        ticket.setCategory(request.getCategory());
+        ticket.setPriority(request.getPriority());
+        ticket.setLocation(request.getLocation());
+        ticket.setReporterContact(request.getReporterContact());
+
+        return TicketResponse.from(ticketRepository.save(ticket));
+    }
     // ── Read ──────────────────────────────────────────────────────────────────
 
     public List<TicketResponse> getAllTickets() {
@@ -181,6 +201,14 @@ public class TicketService {
     public TicketResponse addComment(String ticketId, CommentRequest request,
                                      UserPrincipal currentUser) {
         Ticket ticket = findTicketOrThrow(ticketId);
+
+        if (ticket.getStatus() == TicketStatus.RESOLVED ||
+            ticket.getStatus() == TicketStatus.CLOSED ||
+            ticket.getStatus() == TicketStatus.REJECTED) {
+            throw new IllegalStateException(
+                "Cannot add comment to a ticket that is " + ticket.getStatus()
+            );
+        }
 
         Comment comment = new Comment();
         comment.setContent(request.getContent());
