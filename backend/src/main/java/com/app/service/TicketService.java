@@ -347,4 +347,32 @@ public class TicketService {
             return "MEDIUM"; 
         }
     }
+
+    public TicketResponse updateTicket(String id, TicketRequest request, String userId) {
+    // 1. Find the ticket
+    Ticket ticket = ticketRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+
+    // 2. Security: Ensure the person editing is the one who created it
+    if (!ticket.getReporterId().equals(userId)) {
+        throw new RuntimeException("You are not authorized to edit this ticket.");
+    }
+
+    // 3. Business Rule: Only allow edits if the ticket is still 'OPEN'
+    if (ticket.getStatus() != TicketStatus.OPEN) {
+        throw new RuntimeException("Cannot edit a ticket that is already " + ticket.getStatus());
+    }
+
+    // 4. Update the fields
+    ticket.setTitle(request.getTitle());
+    ticket.setDescription(request.getDescription());
+    ticket.setCategory(request.getCategory());
+    ticket.setPriority(request.getPriority());
+    ticket.setLocation(request.getLocation());
+    ticket.setReporterContact(request.getReporterContact());
+    ticket.setUpdatedAt(LocalDateTime.now());
+
+    // 5. Save and return
+    return TicketResponse.from(ticketRepository.save(ticket));
+}
 }

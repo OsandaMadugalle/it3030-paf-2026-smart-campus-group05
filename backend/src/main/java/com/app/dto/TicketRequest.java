@@ -23,6 +23,8 @@ public class TicketRequest {
     private String location;
     private String reporterContact;
 
+    public TicketRequest() {}
+
     public String getTitle() {
         return title; 
     }

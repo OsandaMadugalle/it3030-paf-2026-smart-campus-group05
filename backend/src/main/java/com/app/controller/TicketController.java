@@ -141,6 +141,16 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.rejectTicket(id, reason, currentUser));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponse> updateTicket(
+            @PathVariable String id,
+            @Valid @RequestBody TicketRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+
+        // Pass the ticket ID, the new data, and the current user's ID to the service
+        return ResponseEntity.ok(ticketService.updateTicket(id, request, currentUser.getId()));
+    }
+
     // ── POST /api/tickets/{id}/comments ───────────────────────────────────────
     @PostMapping("/{id}/comments")
     public ResponseEntity<TicketResponse> addComment(
