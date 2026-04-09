@@ -225,7 +225,7 @@ const AdminDashboard = () => {
       setEditingFacility(null);
       fetchData();
     } catch (err) {
-      showToast('Failed to save facility', 'error');
+      showToast('failed to save facility', 'error');
     } finally {
       setActionLoading(false);
     }
