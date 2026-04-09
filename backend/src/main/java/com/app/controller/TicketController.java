@@ -16,6 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -173,5 +177,16 @@ public class TicketController {
 
         ticketService.deleteTicket(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Analyze AI priority ──────────────────────────────────────────────
+    @PostMapping("/analyze-priority")
+    public ResponseEntity<String> analyzePriority(@RequestBody Map<String, String> request) {
+        String title = request.get("title");
+        String description = request.get("description");
+    
+        // Call the service method we just updated
+        String suggestion = ticketService.suggestPriority(title, description);
+        return ResponseEntity.ok(suggestion);
     }
 }

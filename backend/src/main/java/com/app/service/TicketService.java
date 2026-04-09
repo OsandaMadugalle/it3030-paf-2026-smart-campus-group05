@@ -13,11 +13,15 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.*;
+
 
 @Service
 public class TicketService {
@@ -25,6 +29,13 @@ public class TicketService {
     private final TicketRepository    ticketRepository;
     private final FileStorageService  fileStorageService;
     private final JavaMailSender      mailSender;
+
+    
+    @Value("${groq.api.key}")
+    private String groqApiKey;
+
+    @Value("${groq.api.url}")
+    private String groqApiUrl;
 
     public TicketService(TicketRepository ticketRepository,
                          FileStorageService fileStorageService,
@@ -286,5 +297,54 @@ public class TicketService {
     private Ticket findTicketOrThrow(String id) {
         return ticketRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+    }
+
+    // ── AI Priority Suggestion ───────────────────────────────────────────────────────────
+
+    public String suggestPriority(String title, String description) {
+    try {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 1. Prepare Headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(groqApiKey);
+
+        // 2. Prepare the Prompt
+        String systemPrompt = "You are a campus facilities assistant. Categorize the priority of an incident into ONLY one word: LOW, MEDIUM, HIGH, or CRITICAL.";
+        String userPrompt = String.format("Title: %s\nDescription: %s\n\nPriority:", title, description);
+
+        // 3. Build Groq Request Body (OpenAI compatible format)
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", "llama-3.1-8b-instant");
+        body.put("temperature", 0.1); // Low temperature for consistent output
+        
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        messages.add(Map.of("role", "user", "content", userPrompt));
+        body.put("messages", messages);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        
+        // 4. Call Groq API
+        ResponseEntity<Map> response = restTemplate.postForEntity(groqApiUrl, entity, Map.class);
+        
+        // 5. Extract Content from OpenAI structure: choices[0].message.content
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+        Map<String, Object> firstChoice = (Map<String, Object>) choices.get(0).get("message");
+        String result = firstChoice.get("content").toString().trim().toUpperCase();
+
+        // 6. Final Clean-up (Remove periods or extra words if the AI gets chatty)
+        if (result.contains("LOW")) return "LOW";
+        if (result.contains("CRITICAL")) return "CRITICAL";
+        if (result.contains("HIGH")) return "HIGH";
+        if (result.contains("MEDIUM")) return "MEDIUM";
+        
+        return "MEDIUM"; // Default fallback
+        
+        } catch (Exception e) {
+            System.err.println("Groq AI Error: " + e.getMessage());
+            return "MEDIUM"; 
+        }
     }
 }
