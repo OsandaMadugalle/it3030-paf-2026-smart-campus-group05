@@ -22,6 +22,7 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.getAllUsers();
+        System.out.println("DEBUG: Found " + users.size() + " users in database");
         List<UserResponse> response = users.stream()
                 .map(UserResponse::new)
                 .collect(Collectors.toList());

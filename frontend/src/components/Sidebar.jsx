@@ -416,8 +416,16 @@ const Sidebar = ({ navItems, userInfo, onLogout, activeItem, onNavClick, isOpen,
           {userInfo && (
             <div style={styles.userInfo}>
               <div style={styles.avatar}>
-                {userInfo.picture ? (
-                  <img src={userInfo.picture} alt={userInfo.name} style={styles.avatarImg} />
+                {userInfo.avatarUrl || userInfo.picture ? (
+                  <img 
+                    src={userInfo.avatarUrl || userInfo.picture} 
+                    alt={userInfo.name} 
+                    style={styles.avatarImg} 
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerText = getInitials(userInfo.name);
+                    }}
+                  />
                 ) : (
                   getInitials(userInfo.name)
                 )}

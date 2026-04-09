@@ -46,6 +46,7 @@ public class JwtTokenProvider {
                 .setSubject(userPrincipal.getId())
                 .claim("email", userPrincipal.getEmail())
                 .claim("name", userPrincipal.getName())
+                .claim("avatarUrl", userPrincipal.getAvatarUrl())
                 .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)

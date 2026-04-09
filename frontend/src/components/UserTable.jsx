@@ -146,8 +146,8 @@ const UserTable = ({ users, showActions, onAssignRole, onRemoveRole, onDelete })
       <table style={styles.table}>
         <thead>
           <tr>
-            <th style={styles.th}>User</th>
-            <th style={styles.th}>Email</th>
+            <th style={styles.th}>User Details</th>
+            <th style={styles.th}>Auth Provider</th>
             <th style={styles.th}>Role</th>
             <th style={styles.th}>Status</th>
             <th style={styles.th}>Joined</th>
@@ -160,16 +160,27 @@ const UserTable = ({ users, showActions, onAssignRole, onRemoveRole, onDelete })
               <td style={styles.td}>
                 <div style={styles.userCell}>
                   <div style={styles.avatar}>
-                    {user.picture ? (
-                      <img src={user.picture} alt={user.name} style={styles.avatarImg} />
+                    {user.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.name} 
+                        style={styles.avatarImg} 
+                        onError={(e) => {
+                          e.target.onerror = null; 
+                          e.target.parentElement.innerHTML = getInitials(user.name);
+                        }}
+                      />
                     ) : (
                       getInitials(user.name)
                     )}
                   </div>
-                  <span style={styles.userName}>{user.name}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={styles.userName}>{user.name}</span>
+                    <span style={styles.userEmail}>{user.email}</span>
+                  </div>
                 </div>
               </td>
-              <td style={styles.td}>{user.email}</td>
+              <td style={styles.td}>{user.provider || 'Local'}</td>
               <td style={styles.td}>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                   {user.roles?.map((role) => (
@@ -198,13 +209,13 @@ const UserTable = ({ users, showActions, onAssignRole, onRemoveRole, onDelete })
                       style={{ ...styles.button, ...styles.assignBtn }}
                       onClick={() => onAssignRole && onAssignRole(user)}
                     >
-                      Assign Role
+                      Change Role
                     </button>
                     <button
                       style={{ ...styles.button, ...styles.removeBtn }}
                       onClick={() => onRemoveRole && onRemoveRole(user)}
                     >
-                      Remove Role
+                      Reset to User
                     </button>
                     <button
                       style={{ ...styles.button, ...styles.deleteBtn }}

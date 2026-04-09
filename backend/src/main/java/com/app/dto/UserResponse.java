@@ -3,6 +3,7 @@ package com.app.dto;
 import com.app.model.Role;
 import com.app.model.User;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,8 @@ public class UserResponse {
     private Set<String> roles;
     private String avatarUrl;
     private String provider;
+    private boolean enabled;
+    private java.time.LocalDateTime createdAt;
 
     public UserResponse() {}
 
@@ -20,11 +23,16 @@ public class UserResponse {
         this.id = user.getId();
         this.email = user.getEmail();
         this.name = user.getName();
-        this.roles = user.getRoles().stream()
+        this.roles = user.getRoles() == null
+            ? Collections.emptySet()
+            : user.getRoles().stream()
+                .filter(java.util.Objects::nonNull)
                 .map(Role::name)
                 .collect(Collectors.toSet());
         this.avatarUrl = user.getAvatarUrl();
         this.provider = user.getProvider();
+        this.enabled = user.isEnabled();
+        this.createdAt = user.getCreatedAt() != null ? user.getCreatedAt() : java.time.LocalDateTime.now();
     }
 
     public String getId() {
@@ -73,5 +81,21 @@ public class UserResponse {
 
     public void setProvider(String provider) {
         this.provider = provider;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
