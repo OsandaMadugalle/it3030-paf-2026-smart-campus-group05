@@ -42,6 +42,7 @@ export const useRole = () => {
       id: decoded.sub,
       email: decoded.email,
       name: decoded.name,
+      avatarUrl: decoded.avatarUrl,
       roles: roles,
     };
   };

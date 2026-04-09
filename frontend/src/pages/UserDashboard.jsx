@@ -1459,11 +1459,15 @@ const UserDashboard = () => {
       <div style={styles.profileCard}>
         <img
           src={
+            userInfo?.avatarUrl ||
             userInfo?.picture ||
             `https://ui-avatars.com/api/?name=${userInfo?.name}&background=2563EB&color=fff&size=200`
           }
           alt={userInfo?.name}
           style={styles.profileAvatar}
+          onError={(e) => {
+            e.target.src = `https://ui-avatars.com/api/?name=${userInfo?.name}&background=2563EB&color=fff&size=200`;
+          }}
         />
         <h2 style={styles.profileName}>{userInfo?.name || "User"}</h2>
         <p style={styles.profileEmail}>{userInfo?.email || "-"}</p>

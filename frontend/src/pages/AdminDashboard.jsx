@@ -122,6 +122,7 @@ const AdminDashboard = () => {
     { id: 'incidents', label: 'Help Desk / Incidents', icon: 'hammer-wrench' },
     { id: 'reports', label: 'Reports & Analytics', icon: 'chart' },
     { id: 'notifications-view', label: 'Notifications', icon: 'bell' },
+    { id: 'profile', label: 'My Profile', icon: 'user' },
     { id: 'settings', label: 'Settings', icon: 'settings' }
   ];
 
@@ -1685,6 +1686,161 @@ const AdminDashboard = () => {
     </>
   );
 
+  // Render Profile Tab
+  const renderProfile = () => (
+    <>
+      <div style={styles.header}>
+        <h1 style={styles.greeting}>My Profile</h1>
+        <p style={styles.subtitle}>View and manage your personal account information.</p>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '24px' }}>
+        <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ 
+            width: '120px', 
+            height: '120px', 
+            borderRadius: '50%', 
+            backgroundColor: '#2563EB',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '40px',
+            fontWeight: '600',
+            color: '#FFFFFF',
+            marginBottom: '20px',
+            overflow: 'hidden',
+            border: '4px solid #F1F5F9'
+          }}>
+            {userInfo?.avatarUrl || userInfo?.picture ? (
+              <img 
+                src={userInfo.avatarUrl || userInfo.picture} 
+                alt={userInfo.name} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.innerText = userInfo?.name?.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                }}
+              />
+            ) : (
+              userInfo?.name?.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+            )}
+          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#0F172A', marginBottom: '4px' }}>{userInfo?.name}</h2>
+          <p style={{ color: '#64748B', marginBottom: '20px' }}>{userInfo?.email}</p>
+          
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '24px' }}>
+            {userInfo?.roles?.map(role => (
+              <span key={role} style={{ 
+                backgroundColor: '#DBEAFE', 
+                color: '#1D4ED8', 
+                padding: '4px 12px', 
+                borderRadius: '9999px', 
+                fontSize: '12px', 
+                fontWeight: '600',
+                textTransform: 'uppercase'
+              }}>
+                {role.replace('ROLE_', '')}
+              </span>
+            ))}
+          </div>
+
+          <div style={{ width: '100%', borderTop: '1px solid #E2E8F0', paddingTop: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#64748B', fontSize: '14px' }}>Account Type</span>
+                <span style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {userInfo?.provider === 'google' && (
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  )}
+                  {userInfo?.provider || 'Local'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#64748B', fontSize: '14px' }}>Status</span>
+                <span style={{ color: '#10B981', fontWeight: '700', fontSize: '13px' }}>ACTIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={styles.card}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px' }}>Admin Insight</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+              <div style={{ padding: '16px', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <p style={{ color: '#64748B', fontSize: '13px', marginBottom: '8px' }}>Security Level</p>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#0F172A' }}>High</p>
+              </div>
+              <div style={{ padding: '16px', backgroundColor: '#ECFDF5', borderRadius: '12px', border: '1px solid #D1FAE5' }}>
+                <p style={{ color: '#059669', fontSize: '13px', marginBottom: '8px' }}>Login Method</p>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#059669' }}>SSO/Local</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px' }}>Security & Sessions</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: '#F8FAFC', borderRadius: '12px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    <p style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>Current Session</p>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Manage your active login session</p>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  style={{ 
+                    padding: '8px 20px', 
+                    backgroundColor: '#FEE2E2', 
+                    color: '#DC2626', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    fontWeight: '600',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Sign Out
+                </button>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: '#F8FAFC', borderRadius: '12px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0369A1" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <p style={{ fontWeight: '600', fontSize: '15px', margin: 0 }}>System Support</p>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Access admin support channels</p>
+                </div>
+                <button 
+                  onClick={() => navigate('/contact')}
+                  style={{ 
+                    padding: '8px 20px', 
+                    backgroundColor: '#E0F2FE', 
+                    color: '#0369A1', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    fontWeight: '600',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Contact
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   const renderContent = () => {
     if (loading && activeTab === 'overview') {
       return (
@@ -1703,6 +1859,7 @@ const AdminDashboard = () => {
       case 'announcements': return renderAnnouncements();
       case 'reports': return renderReports();
       case 'notifications': return renderNotifications();
+      case 'profile': return renderProfile();
       case 'settings': return renderSettings();
       case 'incidents': return <IncidentManager />;
       default: return renderOverview();
