@@ -29,6 +29,7 @@ public class TicketService {
     private final TicketRepository    ticketRepository;
     private final FileStorageService  fileStorageService;
     private final JavaMailSender      mailSender;
+    private final NotificationService notificationService;
 
     
     @Value("${groq.api.key}")
@@ -39,10 +40,12 @@ public class TicketService {
 
     public TicketService(TicketRepository ticketRepository,
                          FileStorageService fileStorageService,
-                         JavaMailSender mailSender) {
+                         JavaMailSender mailSender,
+                         NotificationService notificationService) {
         this.ticketRepository   = ticketRepository;
         this.fileStorageService = fileStorageService;
         this.mailSender         = mailSender;
+        this.notificationService = notificationService;
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -71,7 +74,12 @@ public class TicketService {
             ticket.setAttachments(paths);
         }
 
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Notify Admins and MODERATORs about new ticket
+        notificationService.sendTicketCreatedNotification(saved);
+
+        return TicketResponse.from(saved);
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -120,7 +128,12 @@ public class TicketService {
         addHistory(ticket, prev, "IN_PROGRESS", technicianId,
                    technicianName, "Assigned to " + technicianName);
 
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Notify Technician that a ticket has been assigned to them
+        notificationService.sendTicketAssignedNotification(technicianId, saved);
+
+        return TicketResponse.from(saved);
     }
 
     // IN_PROGRESS → RESOLVED
@@ -140,6 +153,12 @@ public class TicketService {
                    currentUser.getName(), resolutionNotes);
 
         Ticket saved = ticketRepository.save(ticket);
+
+        // Notify user about status change
+        notificationService.sendTicketResolvedNotification(ticket.getReporterId(), saved, resolutionNotes);
+        
+        // Notify Admins about resolution
+        notificationService.sendTicketUpdateToAdmins(saved, "RESOLVED", currentUser.getId());
 
         // Innovation 3 — send email to reporter on RESOLVED
         sendStatusEmail(
@@ -169,7 +188,12 @@ public class TicketService {
         addHistory(ticket, prev, "CLOSED", currentUser.getId(),
                    currentUser.getName(), "Ticket closed");
 
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Notify user about status change
+        notificationService.sendTicketStatusUpdatedNotification(ticket.getReporterId(), saved, prev, "CLOSED");
+
+        return TicketResponse.from(saved);
     }
 
     // Any active → REJECTED
@@ -190,6 +214,12 @@ public class TicketService {
                    currentUser.getName(), reason);
 
         Ticket saved = ticketRepository.save(ticket);
+
+        // Notify user about status change
+        notificationService.sendTicketRejectedNotification(ticket.getReporterId(), saved, reason);
+        
+        // Notify Admins about rejection
+        notificationService.sendTicketUpdateToAdmins(saved, "REJECTED", currentUser.getId());
 
         // Innovation 3 — send email to reporter on REJECTED
         sendStatusEmail(
@@ -223,7 +253,19 @@ public class TicketService {
         );
 
         ticket.getComments().add(comment);
-        return TicketResponse.from(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Notify Reporter if commenter is NOT the reporter
+        if (!ticket.getReporterId().equals(currentUser.getId())) {
+            notificationService.sendTicketCommentNotification(ticket.getReporterId(), saved, currentUser.getName(), request.getContent());
+        }
+        
+        // Notify Assigned Technician if commenter is NOT the technician
+        if (ticket.getAssignedToId() != null && !ticket.getAssignedToId().equals(currentUser.getId())) {
+            notificationService.sendTicketCommentNotification(ticket.getAssignedToId(), saved, currentUser.getName(), request.getContent());
+        }
+
+        return TicketResponse.from(saved);
     }
 
     public TicketResponse deleteComment(String ticketId, String commentId,
