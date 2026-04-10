@@ -2,40 +2,195 @@ import React from 'react';
 import StatusBadge from '../StatusBadge';
 
 const DetailedBookingCard = ({ booking, onCancel, onView, onResubmit }) => {
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const status = booking.status?.toUpperCase() || 'PENDING';
 
   const formatTime = (timeString) => {
     if (!timeString) return '';
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+    try {
+      const parts = timeString.split(':');
+      if (parts.length < 2) return timeString;
+      const hours = parseInt(parts[0]);
+      const minutes = parts[1];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    } catch (e) {
+      return timeString;
+    }
   };
 
-  const getStatusBorderColor = (status) => {
-    const colors = {
-      PENDING: 'border-yellow-200',
-      APPROVED: 'border-green-200',
-      REJECTED: 'border-red-200',
-      CANCELLED: 'border-slate-200'
-    };
-    return colors[status] || 'border-slate-200';
+  const getBorderColor = () => {
+    switch (status) {
+      case 'APPROVED': return '#10B981';
+      case 'REJECTED': return '#EF4444';
+      case 'PENDING': return '#F59E0B';
+      case 'CANCELLED': return '#64748B';
+      default: return '#E2E8F0';
+    }
+  };
+
+  const styles = {
+    card: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: '12px',
+      border: '1px solid #E2E8F0',
+      borderLeft: `4px solid ${getBorderColor()}`,
+      padding: '24px',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: '20px',
+    },
+    facilityName: {
+      fontSize: '18px',
+      fontWeight: '700',
+      color: '#0F172A',
+      marginBottom: '4px',
+    },
+    purpose: {
+      fontSize: '14px',
+      color: '#475569',
+      lineHeight: '1.5',
+      marginBottom: '20px',
+    },
+    details: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '16px',
+      marginBottom: '24px',
+      padding: '16px',
+      backgroundColor: '#F8FAFC',
+      borderRadius: '8px',
+    },
+    detailItem: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+    },
+    detailLabel: {
+      fontSize: '11px',
+      fontWeight: '600',
+      color: '#64748B',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+    },
+    detailValue: {
+      fontSize: '14px',
+      color: '#1E293B',
+      fontWeight: '500',
+    },
+    actions: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      gap: '12px',
+      paddingTop: '20px',
+      borderTop: '1px solid #F1F5F9',
+    },
+    viewBtn: {
+      padding: '8px 16px',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid #CBD5E1',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#334155',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    cancelBtn: {
+      padding: '8px 16px',
+      backgroundColor: status === 'PENDING' ? '#F1F5F9' : '#EF4444',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: status === 'PENDING' ? '#475569' : '#FFFFFF',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    resubmitBtn: {
+      padding: '8px 16px',
+      backgroundColor: '#2563EB',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#FFFFFF',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    printBtn: {
+      padding: '8px 16px',
+      backgroundColor: '#3B82F6',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#FFFFFF',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    },
+    statusGrid: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    rejectionNote: {
+      backgroundColor: '#FEF2F2',
+      border: '1px solid #FEE2E2',
+      borderRadius: '8px',
+      padding: '12px',
+      marginBottom: '20px',
+    },
+    rejectionText: {
+      fontSize: '13px',
+      color: '#991B1B',
+    },
+    cancellationNote: {
+      backgroundColor: '#F8FAFC',
+      border: '1px solid #F1F5F9',
+      borderRadius: '8px',
+      padding: '12px',
+      marginBottom: '20px',
+    },
+    cancellationText: {
+      fontSize: '13px',
+      color: '#475569',
+    },
+    footerStatus: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: '12px',
+    },
+    submittedOn: {
+      fontSize: '12px',
+      color: '#94A3B8',
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const getDurationText = (duration) => {
-    if (!duration) return '';
+    if (!duration) return 'N/A';
+    if (typeof duration !== 'number') return duration;
     const hours = Math.floor(duration / 60);
     const minutes = duration % 60;
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
+    if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   };
 
@@ -46,113 +201,118 @@ const DetailedBookingCard = ({ booking, onCancel, onView, onResubmit }) => {
     }
   };
 
-  const handleResubmit = () => {
-    if (onResubmit) {
-      onResubmit(booking);
-    }
-  };
-
   return (
-    <div className={`bg-white rounded-xl border-l-4 ${getStatusBorderColor(booking.status)} border border-slate-200 p-6 hover:shadow-md transition-shadow`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-slate-800">{booking.resourceName}</h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              booking.resourceType === 'LECTURE_HALL' ? 'bg-blue-100 text-blue-800' :
-              booking.resourceType === 'LAB' ? 'bg-green-100 text-green-800' :
-              booking.resourceType === 'MEETING_ROOM' ? 'bg-purple-100 text-purple-800' :
-              'bg-orange-100 text-orange-800'
-            }`}>
-              {booking.resourceType.replace('_', ' ')}
-            </span>
-            <StatusBadge status={booking.status} />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-600">
-            <div>
-              <span className="font-medium">Date:</span>
-              <div>{formatDate(booking.date)}</div>
-            </div>
-            <div>
-              <span className="font-medium">Time:</span>
-              <div>{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</div>
-            </div>
-            <div>
-              <span className="font-medium">Duration:</span>
-              <div>{getDurationText(booking.duration)}</div>
-            </div>
-            <div>
-              <span className="font-medium">Attendees:</span>
-              <div>{booking.expectedAttendees}</div>
-            </div>
-          </div>
+    <div
+      style={styles.card}
+      onMouseOver={(e) => {
+        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      <div style={styles.header}>
+        <div style={styles.statusGrid}>
+          <h3 style={styles.facilityName}>
+            {booking.resourceName || booking.facilityName || 'Facility Request'}
+          </h3>
+          <StatusBadge status={status} />
         </div>
       </div>
 
-      <div className="mb-4">
-        <p className="text-slate-700 line-clamp-2">{booking.purpose}</p>
+      <p style={styles.purpose}>{booking.purpose || 'No purpose specified'}</p>
+
+      <div style={styles.details}>
+        <div style={styles.detailItem}>
+          <span style={styles.detailLabel}>Date</span>
+          <span style={styles.detailValue}>{formatDate(booking.date || booking.preferredDate)}</span>
+        </div>
+
+        <div style={styles.detailItem}>
+          <span style={styles.detailLabel}>Time</span>
+          <span style={styles.detailValue}>
+            {booking.startTime && booking.endTime 
+              ? `${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`
+              : (booking.preferredTime || '-')}
+          </span>
+        </div>
+
+        <div style={styles.detailItem}>
+          <span style={styles.detailLabel}>Duration</span>
+          <span style={styles.detailValue}>{getDurationText(booking.duration || booking.durationMinutes)}</span>
+        </div>
+
+        <div style={styles.detailItem}>
+          <span style={styles.detailLabel}>Attendees</span>
+          <span style={styles.detailValue}>{booking.expectedAttendees || 0}</span>
+        </div>
       </div>
 
-      {/* Status-specific content */}
-      {booking.status === 'REJECTED' && booking.rejectionReason && (
-        <div className="mb-4 p-3 bg-red-50 rounded-lg">
-          <p className="text-sm text-red-800">
-            <span className="font-medium">Rejection reason:</span> {booking.rejectionReason}
+      {status === 'REJECTED' && booking.rejectionReason && (
+        <div style={styles.rejectionNote}>
+          <p style={styles.rejectionText}>
+            <strong>Rejection Reason:</strong> {booking.rejectionReason}
           </p>
         </div>
       )}
 
-      {booking.status === 'CANCELLED' && booking.cancellationReason && (
-        <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-          <p className="text-sm text-slate-600">
-            <span className="font-medium">Cancellation reason:</span> {booking.cancellationReason}
+      {status === 'CANCELLED' && booking.cancellationReason && (
+        <div style={styles.cancellationNote}>
+          <p style={styles.cancellationText}>
+            <strong>Cancellation Reason:</strong> {booking.cancellationReason}
           </p>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex justify-between items-center">
-        <div className="text-xs text-slate-500">
-          Submitted {new Date(booking.createdAt).toLocaleDateString()}
+      <div style={styles.actions}>
+        <div style={styles.submittedOn}>
+          Submitted {formatDate(booking.createdAt || booking.submittedAt)}
         </div>
-
-        <div className="flex gap-2">
-          {booking.canCancel && onCancel && (
+        
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {onView && (
             <button
+              style={styles.viewBtn}
+              onClick={() => onView(booking)}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
+            >
+              View Details
+            </button>
+          )}
+
+          {status === 'APPROVED' && (
+             <button
+              style={styles.printBtn}
+              onClick={() => window.print()}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+            >
+              Print Pass
+            </button>
+          )}
+          
+          {(status === 'PENDING' || status === 'APPROVED') && onCancel && (
+            <button
+              style={styles.cancelBtn}
               onClick={handleCancel}
-              className={`px-3 py-1 text-sm ${
-                booking.status === 'PENDING' ? 'bg-slate-600' : 'bg-red-600'
-              } text-white rounded-lg hover:opacity-90 transition-colors`}
+              onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
             >
               Cancel
             </button>
           )}
 
-          {booking.status === 'APPROVED' && (
+          {status === 'REJECTED' && onResubmit && (
             <button
-              onClick={() => window.print()}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Print
-            </button>
-          )}
-
-          {booking.status === 'REJECTED' && onResubmit && (
-            <button
-              onClick={handleResubmit}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              style={styles.resubmitBtn}
+              onClick={() => onResubmit(booking)}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
             >
               Resubmit
-            </button>
-          )}
-
-          {onView && (
-            <button
-              onClick={() => onView(booking)}
-              className="px-3 py-1 text-sm border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              View Details
             </button>
           )}
         </div>
@@ -160,5 +320,6 @@ const DetailedBookingCard = ({ booking, onCancel, onView, onResubmit }) => {
     </div>
   );
 };
+
 
 export default DetailedBookingCard;
