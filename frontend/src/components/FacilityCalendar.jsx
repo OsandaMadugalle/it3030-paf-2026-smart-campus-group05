@@ -101,27 +101,49 @@ const FacilityCalendar = ({ onBookSlot }) => {
 
   // Get booking for a specific date and time slot
   const getBookingForSlot = (date, timeSlot) => {
-    const dateStr = formatDate(date);
-    const slotHour = parseInt(timeSlot.split(':')[0]);
+    const dateStr = formatDate(date); // This returns YYYY-MM-DD
+    const [slotHour] = timeSlot.split(':').map(Number);
 
     return bookings.find(b => {
-      // Handle both "2026-04-06" and "2026-04-06T00:00:00" formats
-      const bookingDate = b.date ? String(b.date).split('T')[0] : '';
-      if (bookingDate !== dateStr) return false;
-      if (b.status === 'CANCELLED' || b.status === 'REJECTED') return false;
-      const startHour = parseInt(b.startTime?.split(':')[0] || 0);
-      const endHour = parseInt(b.endTime?.split(':')[0] || 0);
+      // 1. Robust Date Check
+      // Handle if b.date is ISO string or already YYYY-MM-DD
+      const bDateStr = b.date && b.date.includes('T') 
+        ? b.date.split('T')[0] 
+        : b.date;
+    
+      if (bDateStr !== dateStr) return false;
+
+      // 2. Filter out inactive bookings
+      const status = b.status?.toUpperCase();
+        if (status === 'CANCELLED' || status === 'REJECTED') return false;
+
+      // 3. Robust Time Check (Handle String "10:00" or "10:00:00" or Array [10, 0])
+      let startHour, endHour;
+
+      if (Array.isArray(b.startTime)) {
+        [startHour] = b.startTime;
+        [endHour] = b.endTime;
+      } else if (typeof b.startTime === 'string') {
+        startHour = parseInt(b.startTime.split(':')[0]);
+        endHour = parseInt(b.endTime.split(':')[0]);
+      }
+
+      // Check if the current slot hour falls within the booking range
       return slotHour >= startHour && slotHour < endHour;
     });
   };
 
-  // Get slot status
   const getSlotStatus = (date, timeSlot) => {
     if (isPast(date)) return 'past';
+  
     const booking = getBookingForSlot(date, timeSlot);
     if (!booking) return 'available';
-    if (booking.status === 'APPROVED') return 'approved';
-    if (booking.status === 'PENDING') return 'pending';
+  
+    // Ensure we compare uppercase strings
+    const status = booking.status?.toUpperCase();
+    if (status === 'APPROVED') return 'approved';
+    if (status === 'PENDING') return 'pending';
+  
     return 'available';
   };
 
