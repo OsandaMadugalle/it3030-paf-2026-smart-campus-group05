@@ -4,10 +4,12 @@ import com.app.dto.BookingRequest;
 import com.app.dto.BookingResponse;
 import com.app.dto.BookingStatusUpdateRequest;
 import com.app.exception.*;
+import com.app.model.Activity;
 import com.app.model.Booking;
 import com.app.model.BookingStatus;
 import com.app.model.Facility;
 import com.app.model.User;
+import com.app.repository.ActivityRepository;
 import com.app.repository.BookingRepository;
 import com.app.repository.FacilityRepository;
 import com.app.repository.UserRepository;
@@ -42,6 +44,9 @@ public class BookingService {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private ActivityRepository activityRepository;
 
     public BookingResponse createBooking(BookingRequest request, UserPrincipal userPrincipal) {
         // Validate date is future
@@ -89,6 +94,13 @@ public class BookingService {
 
         // Send real-time update to Admin/Moderator dashboard
         messagingTemplate.convertAndSend("/topic/bookings", mapToResponse(savedBooking));
+
+        // Add this:
+        Activity log = new Activity(userPrincipal.getName(), "requested", facility.getName());
+        activityRepository.save(log);
+    
+        // Broadcast via WebSocket so the Moderator sees it instantly
+        messagingTemplate.convertAndSend("/topic/activities", log);
 
         return mapToResponse(savedBooking);
     }
