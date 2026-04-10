@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/activities")
+@RequestMapping("/api/activities")
 @CrossOrigin(origins = "*") // Allows your React frontend to connect
 public class ActivityController {
 
