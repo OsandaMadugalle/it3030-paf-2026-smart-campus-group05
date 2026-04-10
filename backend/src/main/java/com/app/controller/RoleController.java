@@ -23,6 +23,10 @@ public class RoleController {
     @Autowired
     private RoleService roleService;
 
+    /**
+     * POST /api/admin/roles/assign
+     * (Admin only) Assigns a new security role (e.g., ROLE_MODERATOR) to a specific user.
+     */
     @PostMapping("/admin/roles/assign")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> assignRole(@RequestBody RoleRequest request) {
@@ -31,6 +35,10 @@ public class RoleController {
         return ResponseEntity.ok(new UserResponse(user));
     }
 
+    /**
+     * POST /api/admin/roles/remove
+     * (Admin only) Removes a specific security role from a user.
+     */
     @PostMapping("/admin/roles/remove")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> removeRole(@RequestBody RoleRequest request) {
@@ -39,6 +47,10 @@ public class RoleController {
         return ResponseEntity.ok(new UserResponse(user));
     }
 
+    /**
+     * GET /api/admin/roles/users
+     * (Admin only) Lists all users who possess a specific security role.
+     */
     @GetMapping("/admin/roles/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getUsersByRole(@RequestParam String role) {
@@ -50,6 +62,10 @@ public class RoleController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * GET /api/user/roles/me
+     * Returns the set of roles assigned to the currently authenticated user.
+     */
     @GetMapping("/user/roles/me")
     public ResponseEntity<Set<String>> getMyRoles(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         Set<Role> roles = roleService.getRoles(userPrincipal.getId());

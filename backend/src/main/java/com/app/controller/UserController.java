@@ -15,6 +15,11 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /**
+     * GET /api/user/me
+     * Returns the profile details of the currently authenticated user.
+     * Uses the JWT token from the request header to identify the user.
+     */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         return userService.getUserById(userPrincipal.getId())

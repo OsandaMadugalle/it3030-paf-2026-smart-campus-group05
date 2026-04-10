@@ -111,8 +111,8 @@ const NotificationsPage = () => {
     const adminModToggles = [
       { key: 'bookingRequestedEnabled', label: 'New Booking Requests', icon: '📩' },
       { key: 'ticketCreatedEnabled', label: 'New Incidents/Tickets', icon: '🎫' },
+      { key: 'ticketStatusEnabled', label: 'Ticket Assignments/Updates', icon: '🔄' },
       { key: 'ticketCommentEnabled', label: 'Ticket Comments', icon: '💬' },
-      { key: 'systemNotifications', label: 'Emergency Alerts', icon: '🚨' },
     ];
 
     const userToggles = [
@@ -121,7 +121,6 @@ const NotificationsPage = () => {
       { key: 'bookingCancelledEnabled', label: 'Booking Cancelled', icon: '🚫' },
       { key: 'ticketStatusEnabled', label: 'Ticket Updates', icon: '🔄' },
       { key: 'ticketCommentEnabled', label: 'Ticket Comments', icon: '💬' },
-      { key: 'systemNotifications', label: 'Emergency Alerts', icon: '🚨' },
     ];
 
     if (role === 'ROLE_ADMIN' || role === 'ROLE_MODERATOR') {
