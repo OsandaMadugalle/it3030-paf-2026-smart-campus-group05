@@ -102,13 +102,23 @@ const ModeratorDashboard = () => {
     // 2. Map the Real Backend Data to match your existing ActivityFeed structure
     // Backend: userName -> Frontend: user.name
     // Backend: targetResource -> Frontend: target
-    const realActivities = (activitiesRes.data || []).map(act => ({
-      id: act.id,
-      user: { name: act.userName }, 
-      action: act.action,
-      target: act.targetResource,
-      timestamp: new Date(act.timestamp) // Ensure it's a JS Date object
-    }));
+    const realActivities = (activitiesRes.data || []).map(act => {
+      // Determine type for styling
+      let type = 'request'; // Default blue
+      if (act.action.includes('approved')) type = 'success'; // Green
+      if (act.action.includes('cancelled') || act.action.includes('rejected')) type = 'danger'; // Red
+      if (act.action.includes('updated')) type = 'warning'; // Orange
+      if (act.action.includes('created')) type = 'new'; // Blue +
+
+      return {
+        id: act.id,
+        user: { name: act.userName },
+        action: act.action,
+        target: act.targetResource,
+        timestamp: new Date(act.timestamp),
+        type: type // Send this type to the ActivityFeed component
+      };
+    });
 
     setActivities(realActivities);
 
@@ -154,8 +164,21 @@ const ModeratorDashboard = () => {
     });
 
     // NEW: Activity Feed subscription
-    const activitySub = webSocketService.subscribe('/topic/activities', (newActivity) => {
-      setActivities(prev => [newActivity, ...prev].slice(0, 10)); // Add new activity to top
+    const activitySub = webSocketService.subscribe('/topic/activities', (act) => {
+      // 1. Map the raw backend activity to the frontend structure
+      const formattedActivity = {
+        id: act.id,
+        user: { name: act.userName }, // Maps userName to user.name
+        action: act.action,           // e.g., "approved request for"
+        target: act.targetResource,   // Maps targetResource to target
+        timestamp: act.timestamp      // Used by formatTimeAgo
+      };
+
+      // 2. Add to the top of the list and keep only the latest 10
+      setActivities(prev => [formattedActivity, ...prev].slice(0, 10));
+      
+      // Optional: Show a small toast when a new activity happens
+      // showToast(`New Activity: ${act.userName} ${act.action}`, 'info');
     });
 
     return () => {
