@@ -87,42 +87,48 @@ const ModeratorDashboard = () => {
 
   // Fetch all data
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [facilitiesRes, requestsRes] = await Promise.all([
-        api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
-        api.get('/bookings').catch(() => ({ data: [] })),
-      ]);
-      
-      setFacilities(facilitiesRes.data || []);
-      setRequests(requestsRes.data || []);
-      
-      // Calculate stats
-      const today = new Date().toDateString();
-      const facilitiesData = facilitiesRes.data || [];
-      const requestsData = requestsRes.data || [];
-      
-      setStats({
-        totalFacilities: facilitiesData.length,
-        activeFacilities: facilitiesData.filter(f => f.status?.toLowerCase() === 'active').length,
-        pendingRequests: requestsData.filter(r => r.status?.toLowerCase() === 'pending').length,
-        todayApprovals: requestsData.filter(r => 
-          r.status?.toLowerCase() === 'approved' && 
-          new Date(r.updatedAt).toDateString() === today
-        ).length,
-        maintenanceCount: facilitiesData.filter(f => f.status?.toLowerCase() === 'maintenance').length,
-        usersOnline: Math.floor(Math.random() * 50) + 10, // Mock data
-      });
-      
-      // Generate mock activities
-      setActivities([
-        { id: 1, user: { name: 'Alex Chen' }, action: 'requested', target: 'Conference Room A', timestamp: new Date(Date.now() - 300000) },
-        { id: 2, user: { name: 'Maria Garcia' }, action: 'booked', target: 'Lab 201', timestamp: new Date(Date.now() - 600000) },
-        { id: 3, user: { name: 'James Wilson' }, action: 'cancelled booking for', target: 'Auditorium', timestamp: new Date(Date.now() - 1200000) },
-        { id: 4, user: { name: 'Sarah Johnson' }, action: 'requested', target: 'Sports Complex', timestamp: new Date(Date.now() - 1800000) },
-        { id: 5, user: { name: 'Michael Brown' }, action: 'updated', target: 'Library Meeting Room', timestamp: new Date(Date.now() - 3600000) },
-      ]);
-      
+  setLoading(true);
+  try {
+    // 1. Added api.get('/activities') to the parallel calls
+    const [facilitiesRes, requestsRes, activitiesRes] = await Promise.all([
+      api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
+      api.get('/bookings').catch(() => ({ data: [] })),
+      api.get('/activities').catch(() => ({ data: [] })), // New Call
+    ]);
+    
+    setFacilities(facilitiesRes.data || []);
+    setRequests(requestsRes.data || []);
+    
+    // 2. Map the Real Backend Data to match your existing ActivityFeed structure
+    // Backend: userName -> Frontend: user.name
+    // Backend: targetResource -> Frontend: target
+    const realActivities = (activitiesRes.data || []).map(act => ({
+      id: act.id,
+      user: { name: act.userName }, 
+      action: act.action,
+      target: act.targetResource,
+      timestamp: new Date(act.timestamp) // Ensure it's a JS Date object
+    }));
+
+    setActivities(realActivities);
+
+    // 3. Calculate stats (Kept your existing logic)
+    const today = new Date().toDateString();
+    const facilitiesData = facilitiesRes.data || [];
+    const requestsData = requestsRes.data || [];
+    
+    setStats({
+      totalFacilities: facilitiesData.length,
+      activeFacilities: facilitiesData.filter(f => f.status?.toLowerCase() === 'active').length,
+      pendingRequests: requestsData.filter(r => r.status?.toLowerCase() === 'pending').length,
+      todayApprovals: requestsData.filter(r => 
+        r.status?.toLowerCase() === 'approved' && 
+        new Date(r.updatedAt || r.createdAt).toDateString() === today
+      ).length,
+      maintenanceCount: facilitiesData.filter(f => f.status?.toLowerCase() === 'maintenance').length,
+      usersOnline: Math.floor(Math.random() * 50) + 10, // Keep your mock online count
+    });
+    
     } catch (err) {
       console.error('Failed to fetch data:', err);
       showToast('Failed to load data', 'error');
@@ -147,8 +153,14 @@ const ModeratorDashboard = () => {
       showToast(`Booking Update: ${updatedBooking.resourceName} - ${updatedBooking.status}`, 'info');
     });
 
+    // NEW: Activity Feed subscription
+    const activitySub = webSocketService.subscribe('/topic/activities', (newActivity) => {
+      setActivities(prev => [newActivity, ...prev].slice(0, 10)); // Add new activity to top
+    });
+
     return () => {
       webSocketService.unsubscribe('/topic/bookings');
+      webSocketService.unsubscribe('/topic/activities');
     };
   }, [fetchData]);
 
