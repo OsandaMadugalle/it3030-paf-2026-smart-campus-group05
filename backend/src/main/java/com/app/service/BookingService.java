@@ -153,6 +153,9 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
+        // [ADD HERE] Log the approval activity for the Activity Feed
+        logActivity(userPrincipal.getName(), "approved request for", savedBooking.getResourceName());
+
         // Notify user about approval
         notificationService.sendBookingApprovedNotification(savedBooking.getRequestedBy(), savedBooking);
 
@@ -183,6 +186,8 @@ public class BookingService {
         booking.setApprovedAt(LocalDateTime.now());
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        logActivity(userPrincipal.getName(), "rejected request for", savedBooking.getResourceName());
 
         // Notify user about rejection
         notificationService.sendBookingRejectedNotification(savedBooking.getRequestedBy(), savedBooking, request.getReason());
@@ -219,6 +224,8 @@ public class BookingService {
         booking.setCancellationReason(reason);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        logActivity(userPrincipal.getName(), "cancelled request for", booking.getResourceName());
 
         // Notify user about cancellation
         notificationService.sendBookingCancelledNotification(savedBooking.getRequestedBy(), savedBooking);
@@ -300,5 +307,18 @@ public class BookingService {
         response.setCanReview(canReview);
 
         return response;
+    }
+
+    private void logActivity(String userName, String action, String targetResource) {
+        try {
+            Activity activity = new Activity(userName, action, targetResource);
+            activityRepository.save(activity);
+        
+            // Broadcast via WebSocket to the Moderator Dashboard
+            messagingTemplate.convertAndSend("/topic/activities", activity);
+        } catch (Exception e) {
+            // We wrap in a try-catch so if logging fails, the actual booking approval doesn't crash!
+            System.err.println("Failed to log activity: " + e.getMessage());
+        }
     }
 }
