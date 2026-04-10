@@ -89,14 +89,14 @@ public class NotificationService {
 
         // Specific category toggle check
         boolean enabled = switch (type) {
-            case BOOKING_REQUESTED -> (prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled()) || isAdminOrMod(userId);
+            case BOOKING_REQUESTED -> (prefs.isBookingNotifications() && prefs.isBookingRequestedEnabled());
             case BOOKING_APPROVED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
-            case BOOKING_REJECTED -> prefs.isBookingNotifications() && prefs.isBookingApprovedEnabled();
+            case BOOKING_REJECTED -> prefs.isBookingNotifications() && prefs.isBookingRejectedEnabled();
             case BOOKING_CANCELLED -> prefs.isBookingNotifications() && prefs.isBookingCancelledEnabled();
-            case TICKET_CREATED -> prefs.isTicketCreatedEnabled() || isAdminOrMod(userId);
+            case TICKET_CREATED -> prefs.isTicketCreatedEnabled();
             case TICKET_STATUS_UPDATED, TICKET_ASSIGNED, TICKET_RESOLVED, TICKET_CLOSED, TICKET_REJECTED -> prefs.isTicketStatusEnabled();
             case TICKET_COMMENT_ADDED -> prefs.isTicketCommentEnabled();
-            default -> prefs.isSystemNotifications();
+            default -> true; // For ANNOUNCEMENT and others that don't have a specific toggle
         };
 
         // If explicitly disabled by user, don't even save it
@@ -165,21 +165,29 @@ public class NotificationService {
             case LOW -> NotificationPriority.LOW;
         };
 
-        // Notify Admins with routing based on ticket category (future enhancement)
+        // Notify Admins
         List<User> admins = userRepository.findByRoles(Role.ROLE_ADMIN);
         for (User admin : admins) {
             sendNotification(admin.getId(), title, message, NotificationType.TICKET_CREATED,
                     priority, ticket.getId(), "TICKET");
         }
 
-        // Notify Moderators based on category routing
+        // Notify Moderators
         List<User> moderators = userRepository.findByRoles(Role.ROLE_MODERATOR);
         for (User moderator : moderators) {
-            // Simplified routing: If the user has a specific preference or if it's general
-            // For now, keeping it basic but filtered by their individual toggle
-            sendNotification(moderator.getId(), title, message, NotificationType.TICKET_CREATED,
-                    priority, ticket.getId(), "TICKET");
+            // Check if moderator should receive based on category routing
+            if (shouldModeratorReceive(moderator, ticket.getCategory())) {
+                sendNotification(moderator.getId(), title, message, NotificationType.TICKET_CREATED,
+                        priority, ticket.getId(), "TICKET");
+            }
         }
+    }
+
+    private boolean shouldModeratorReceive(User moderator, Ticket.TicketCategory category) {
+        // Here you can implement specific logic like checking their department/role details
+        // For now, we allow all moderators to receive ticket notifications if they have the toggle enabled
+        // the toggle check happens inside sendNotification()
+        return true;
     }
 
     public void sendTicketAssignedNotification(String technicianUserId, Ticket ticket) {

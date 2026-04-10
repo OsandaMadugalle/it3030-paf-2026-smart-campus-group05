@@ -110,7 +110,6 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
       { key: 'ticketCreatedEnabled', label: 'New Incidents/Tickets', icon: '🎫' },
       { key: 'ticketStatusEnabled', label: 'Ticket Assignments/Updates', icon: '🔄' },
       { key: 'ticketCommentEnabled', label: 'Ticket Comments', icon: '💬' },
-      { key: 'systemNotifications', label: 'Emergency Alerts', icon: '🚨' },
     ];
 
     const userToggles = [
@@ -119,7 +118,6 @@ const NotificationDropdown = ({ onClose, onNotificationRead }) => {
       { key: 'bookingCancelledEnabled', label: 'Booking Cancelled', icon: '🚫' },
       { key: 'ticketStatusEnabled', label: 'Ticket Updates', icon: '🔄' },
       { key: 'ticketCommentEnabled', label: 'Ticket Comments', icon: '💬' },
-      { key: 'systemNotifications', label: 'Emergency Alerts', icon: '🚨' },
     ];
 
     if (role === 'ROLE_ADMIN' || role === 'ROLE_MODERATOR') {

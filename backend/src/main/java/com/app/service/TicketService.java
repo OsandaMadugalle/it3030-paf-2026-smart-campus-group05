@@ -133,6 +133,9 @@ public class TicketService {
         // Notify Technician that a ticket has been assigned to them
         notificationService.sendTicketAssignedNotification(technicianId, saved);
 
+        // Notify Admins about the assignment update
+        notificationService.sendTicketUpdateToAdmins(saved, "ASSIGNED to " + technicianName, technicianId);
+
         return TicketResponse.from(saved);
     }
 
@@ -192,6 +195,9 @@ public class TicketService {
         
         // Notify user about status change
         notificationService.sendTicketStatusUpdatedNotification(ticket.getReporterId(), saved, prev, "CLOSED");
+
+        // Notify Admins about closing
+        notificationService.sendTicketUpdateToAdmins(saved, "CLOSED", currentUser.getId());
 
         return TicketResponse.from(saved);
     }
@@ -264,6 +270,9 @@ public class TicketService {
         if (ticket.getAssignedToId() != null && !ticket.getAssignedToId().equals(currentUser.getId())) {
             notificationService.sendTicketCommentNotification(ticket.getAssignedToId(), saved, currentUser.getName(), request.getContent());
         }
+
+        // Notify Admins about the new comment
+        notificationService.sendTicketCommentToAdmins(saved, currentUser.getName(), request.getContent(), currentUser.getId());
 
         return TicketResponse.from(saved);
     }

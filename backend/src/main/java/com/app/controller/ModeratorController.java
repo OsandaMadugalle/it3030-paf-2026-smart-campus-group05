@@ -19,6 +19,10 @@ public class ModeratorController {
     @Autowired
     private UserService userService;
 
+    /**
+     * GET /api/moderator/users
+     * (Moderator/Admin only) Retrieves a list of all users for moderation purposes.
+     */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.getAllUsers();

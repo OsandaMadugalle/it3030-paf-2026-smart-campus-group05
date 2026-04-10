@@ -42,6 +42,10 @@ public class NotificationController {
         this.preferenceRepository = preferenceRepository;
     }
 
+    /**
+     * GET /api/notifications/my
+     * Fetches a paginated list of notifications for the currently authenticated user.
+     */
     @GetMapping("/my")
     public ResponseEntity<Page<NotificationResponse>> getMyNotifications(
             @AuthenticationPrincipal UserPrincipal currentUser,
@@ -60,12 +64,20 @@ public class NotificationController {
         return ResponseEntity.ok(new PageImpl<>(responses, PageRequest.of(page, size), notifications.size()));
     }
 
+    /**
+     * GET /api/notifications/my/unread-count
+     * Returns the count of unread notifications for the current user.
+     */
     @GetMapping("/my/unread-count")
     public ResponseEntity<Object> getUnreadCount(@AuthenticationPrincipal UserPrincipal currentUser) {
         long count = notificationService.getUnreadCount(currentUser.getId());
         return ResponseEntity.ok(java.util.Collections.singletonMap("count", count));
     }
 
+    /**
+     * PUT /api/notifications/{id}/read
+     * Marks a specific notification as 'read' by its ID.
+     */
     @PutMapping("/{id}/read")
     public ResponseEntity<NotificationResponse> markAsRead(
             @PathVariable String id,
@@ -74,18 +86,30 @@ public class NotificationController {
         return ResponseEntity.ok(mapToResponse(n));
     }
 
+    /**
+     * PUT /api/notifications/read-all
+     * Marks all notifications of the current user as 'read'.
+     */
     @PutMapping("/read-all")
     public ResponseEntity<Object> markAllAsRead(@AuthenticationPrincipal UserPrincipal currentUser) {
         notificationService.markAllAsRead(currentUser.getId());
         return ResponseEntity.ok(java.util.Collections.singletonMap("updated", true));
     }
 
+    /**
+     * DELETE /api/notifications/clear-all
+     * Deletes all notifications for the current user from the database.
+     */
     @DeleteMapping("/clear-all")
     public ResponseEntity<Object> clearAllNotifications(@AuthenticationPrincipal UserPrincipal currentUser) {
         notificationRepository.deleteByUserId(currentUser.getId());
         return ResponseEntity.ok(java.util.Collections.singletonMap("cleared", true));
     }
 
+    /**
+     * POST /api/notifications/send
+     * (Admin/Mod only) Sends a manual notification to a specific user.
+     */
     @PostMapping("/send")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseEntity<NotificationResponse> sendManualNotification(
@@ -96,6 +120,10 @@ public class NotificationController {
         return new ResponseEntity<>(mapToResponse(n), HttpStatus.CREATED);
     }
 
+    /**
+     * POST /api/notifications/send-bulk
+     * (Admin only) Sends a notification to a list of specific user IDs.
+     */
     @PostMapping("/send-bulk")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> sendBulkNotification(
@@ -106,6 +134,10 @@ public class NotificationController {
         return new ResponseEntity<>(java.util.Collections.singletonMap("sent", request.getUserIds().size()), HttpStatus.CREATED);
     }
 
+    /**
+     * POST /api/notifications/broadcast
+     * (Admin only) Sends a notification to all users or a specific target role.
+     */
     @PostMapping("/broadcast")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Object> broadcastNotification(
@@ -120,17 +152,29 @@ public class NotificationController {
         return ResponseEntity.ok(java.util.Collections.singletonMap("broadcast", true));
     }
 
+    /**
+     * GET /api/notifications/analytics/my
+     * Retrieves personal notification statistics/analytics for the current user.
+     */
     @GetMapping("/analytics/my")
     public ResponseEntity<UserNotificationStats> getMyAnalytics(@AuthenticationPrincipal UserPrincipal currentUser) {
         return ResponseEntity.ok(smartNotificationService.getNotificationStats(currentUser.getId()));
     }
 
+    /**
+     * GET /api/notifications/analytics/system
+     * (Admin only) Retrieves system-wide notification analytics.
+     */
     @GetMapping("/analytics/system")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SystemNotificationStats> getSystemAnalytics() {
         return ResponseEntity.ok(smartNotificationService.getSystemAnalytics());
     }
 
+    /**
+     * GET /api/notifications/preferences/my
+     * Fetches the notification settings/preferences for the current user.
+     */
     @GetMapping("/preferences/my")
     public ResponseEntity<UserNotificationPreference> getMyPreferences(@AuthenticationPrincipal UserPrincipal currentUser) {
         UserNotificationPreference prefs = preferenceRepository.findByUserId(currentUser.getId())
@@ -138,6 +182,10 @@ public class NotificationController {
         return ResponseEntity.ok(prefs);
     }
 
+    /**
+     * PUT /api/notifications/preferences/my
+     * Updates notification settings (e.g., enabling/disabling ticket alerts).
+     */
     @PutMapping("/preferences/my")
     public ResponseEntity<UserNotificationPreference> updateMyPreferences(
             @Valid @RequestBody NotificationPreferenceRequest request,
@@ -167,6 +215,10 @@ public class NotificationController {
         return ResponseEntity.ok(saved);
     }
 
+    /**
+     * PUT /api/notifications/preferences/mute
+     * Mutes all notifications for a specified number of hours.
+     */
     @PutMapping("/preferences/mute")
     public ResponseEntity<UserNotificationPreference> muteNotifications(
             @RequestBody java.util.Map<String, Integer> request,
@@ -181,6 +233,10 @@ public class NotificationController {
         return ResponseEntity.ok(preferenceRepository.save(prefs));
     }
 
+    /**
+     * PUT /api/notifications/preferences/unmute
+     * Disables the 'mute' status instantly for the current user.
+     */
     @PutMapping("/preferences/unmute")
     public ResponseEntity<UserNotificationPreference> unmuteNotifications(
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -193,6 +249,10 @@ public class NotificationController {
         return ResponseEntity.ok(preferenceRepository.save(prefs));
     }
 
+    /**
+     * DELETE /api/notifications/{id}
+     * Deletes a single notification by ID (requires ownership or Admin role).
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotification(
             @PathVariable String id,
