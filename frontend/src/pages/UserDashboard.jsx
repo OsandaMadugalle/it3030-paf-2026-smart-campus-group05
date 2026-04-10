@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import webSocketService from '../services/websocketService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -147,7 +148,33 @@ const UserDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+
+    // Subscribe to personal booking updates
+    if (userInfo?.id) {
+      webSocketService.connect();
+      const topic = `/user/${userInfo.id}/queue/bookings`;
+      
+      const subscription = webSocketService.subscribe(topic, (updatedBooking) => {
+        // Refresh local data to show latest status
+        fetchData();
+        showToast(`Your booking for ${updatedBooking.resourceName} is now ${updatedBooking.status}`, 'info');
+      });
+
+      return () => {
+        webSocketService.unsubscribe(topic);
+      };
+    }
+  }, [fetchData, userInfo?.id]);
+
+  // Memoized sorted requests (latest first)
+  const sortedRequests = useMemo(() => {
+    return [...myRequests].sort((a, b) => {
+      // Sort by creation date or updated date if available, fallback to id
+      const dateA = new Date(a.createdAt || a.id);
+      const dateB = new Date(b.createdAt || b.id);
+      return dateB - dateA;
+    });
+  }, [myRequests]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -310,7 +337,7 @@ const UserDashboard = () => {
   };
 
   // Filtered data
-  const filteredRequests = myRequests.filter((r) => {
+  const filteredRequests = sortedRequests.filter((r) => {
     return (
       !requestFilter || r.status?.toLowerCase() === requestFilter.toLowerCase()
     );
@@ -321,6 +348,11 @@ const UserDashboard = () => {
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
     return "Good evening";
+  };
+
+  const handleRefresh = async () => {
+    showToast("Refreshing data...", "info");
+    await fetchData();
   };
 
   const getMinDate = () => {

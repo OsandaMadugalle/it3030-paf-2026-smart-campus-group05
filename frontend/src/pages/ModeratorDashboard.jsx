@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import webSocketService from '../services/websocketService';
 import { useRole } from '../hooks/useRole';
 import { useIsMobile } from '../hooks/useWindowSize';
 import Sidebar from '../components/Sidebar';
@@ -130,8 +131,25 @@ const ModeratorDashboard = () => {
     }
   }, []);
 
+  const handleRefresh = async () => {
+    showToast("Refreshing data...", "info");
+    await fetchData();
+  };
+
   useEffect(() => {
     fetchData();
+
+    // Subscribe to booking updates
+    webSocketService.connect();
+    const subscription = webSocketService.subscribe('/topic/bookings', (updatedBooking) => {
+      // Refresh data when a booking is created or updated
+      fetchData();
+      showToast(`Booking Update: ${updatedBooking.resourceName} - ${updatedBooking.status}`, 'info');
+    });
+
+    return () => {
+      webSocketService.unsubscribe('/topic/bookings');
+    };
   }, [fetchData]);
 
   const handleLogout = () => {
@@ -456,9 +474,22 @@ const ModeratorDashboard = () => {
   // Render Overview Tab
   const renderOverview = () => (
     <>
-      <div style={styles.header}>
-        <h1 style={styles.greeting}>{getGreeting()}, {userInfo?.name?.split(' ')[0] || 'Moderator'}!</h1>
-        <p style={styles.subtitle}>Here's an overview of campus operations.</p>
+      <div style={{...styles.header, display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div>
+          <h1 style={styles.greeting}>{getGreeting()}, {userInfo?.name?.split(' ')[0] || 'Moderator'}!</h1>
+          <p style={styles.subtitle}>Here's an overview of campus operations.</p>
+        </div>
+        <button 
+          onClick={handleRefresh}
+          className="refresh-btn"
+          title="Refresh Data"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
       </div>
 
       <div style={styles.statsGrid}>
@@ -635,9 +666,22 @@ const ModeratorDashboard = () => {
 
     return (
       <>
-        <div style={styles.header}>
-          <h1 style={styles.greeting}>Facility Requests</h1>
-          <p style={styles.subtitle}>Review and manage facility booking requests.</p>
+        <div style={{...styles.header, display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div>
+            <h1 style={styles.greeting}>Facility Requests</h1>
+            <p style={styles.subtitle}>Review and manage facility booking requests.</p>
+          </div>
+          <button 
+            onClick={handleRefresh}
+            className="refresh-btn"
+            title="Refresh Data"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
         </div>
 
         <div style={styles.statsGrid}>
@@ -670,6 +714,7 @@ const ModeratorDashboard = () => {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
 

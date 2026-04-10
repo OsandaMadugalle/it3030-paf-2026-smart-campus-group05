@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import StatusBadge from './StatusBadge';
 
-const BookingTable = ({ 
+const BookingTable = memo(({ 
   requests = [], 
   showActions = true, 
   onApprove, 
@@ -310,6 +310,6 @@ const BookingTable = ({
       </table>
     </div>
   );
-};
+});
 
 export default BookingTable;
