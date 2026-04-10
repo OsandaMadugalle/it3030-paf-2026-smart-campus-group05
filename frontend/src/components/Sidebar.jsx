@@ -96,6 +96,9 @@ const Sidebar = ({ navItems, userInfo, onLogout, activeItem, onNavClick, isOpen,
       backgroundColor: 'transparent',
       width: '100%',
       textAlign: 'left',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      touchAction: 'manipulation',
     },
     navItemActive: {
       backgroundColor: '#1E293B',
@@ -317,6 +320,7 @@ const Sidebar = ({ navItems, userInfo, onLogout, activeItem, onNavClick, isOpen,
   };
 
   const handleNavClick = (itemId) => {
+    if (activeItem === itemId) return;
     onNavClick(itemId);
     if (onToggle) {
       onToggle(false);

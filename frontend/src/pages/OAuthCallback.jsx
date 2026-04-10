@@ -54,9 +54,6 @@ const OAuthCallback = () => {
       const decoded = decodeToken(token);
       const dashboardPath = getDashboardPath(decoded?.roles);
       
-      console.log('User roles:', decoded?.roles);
-      console.log('Navigating to:', dashboardPath);
-      
       navigate(dashboardPath);
     } else {
       navigate('/login?error=No token received');

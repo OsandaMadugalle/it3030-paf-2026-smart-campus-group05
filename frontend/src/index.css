@@ -147,3 +147,37 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Refresh Button Styles */
+.refresh-btn {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.refresh-btn:hover {
+  background-color: #e2e8f0;
+  color: #334155;
+  transform: rotate(30deg);
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.refresh-btn svg {
+  transition: transform 0.4s ease;
+}
+
+.refresh-btn:hover svg {
+  transform: rotate(180deg);
+}

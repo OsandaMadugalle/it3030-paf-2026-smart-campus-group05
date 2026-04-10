@@ -1,7 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import StatusBadge from "./StatusBadge";
 
-const FacilityCard = ({
+const FacilityCard = memo(({
   facility,
   onEdit,
   onDelete,
@@ -435,6 +435,6 @@ const FacilityCard = ({
       </div>
     </div>
   );
-};
+});
 
 export default FacilityCard;

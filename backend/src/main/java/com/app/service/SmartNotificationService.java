@@ -84,17 +84,14 @@ public class SmartNotificationService {
     }
 
     public SystemNotificationStats getSystemAnalytics() {
-        LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0);
+        LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime week = LocalDateTime.now().minusWeeks(1);
 
-        long totalToday = notificationRepository.findAll().stream()
-                .filter(n -> n.getCreatedAt().isAfter(today)).count();
-        long totalWeek = notificationRepository.findAll().stream()
-                .filter(n -> n.getCreatedAt().isAfter(week)).count();
+        long totalToday = notificationRepository.countByCreatedAtAfter(today);
+        long totalWeek = notificationRepository.countByCreatedAtAfter(week);
 
-        List<Notification> all = notificationRepository.findAll();
-        long totalSent = all.size();
-        long totalRead = all.stream().filter(Notification::isRead).count();
+        long totalSent = notificationRepository.count();
+        long totalRead = notificationRepository.countByIsRead(true);
         double openRate = totalSent == 0 ? 0 : (double) totalRead / totalSent * 100;
 
         // Simplified peak hours

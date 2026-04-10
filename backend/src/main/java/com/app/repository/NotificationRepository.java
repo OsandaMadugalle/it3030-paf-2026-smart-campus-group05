@@ -19,4 +19,6 @@ public interface NotificationRepository extends MongoRepository<Notification, St
     long countByUserIdAndIsRead(String userId, boolean isRead);
     List<Notification> findByDigestGroupId(String digestGroupId);
     void deleteByUserId(String userId);
+    long countByCreatedAtAfter(LocalDateTime after);
+    long countByIsRead(boolean isRead);
 }

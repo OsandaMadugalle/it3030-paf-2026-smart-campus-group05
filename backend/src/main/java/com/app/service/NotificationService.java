@@ -138,7 +138,7 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         
         // Real-time WebSocket notify
-        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", saved);
 
         return saved;
     }
@@ -350,7 +350,7 @@ public class NotificationService {
                 .build();
         
         Notification saved = notificationRepository.save(n);
-        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", saved);
+        messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", saved);
         return saved;
     }
 
@@ -451,11 +451,11 @@ public class NotificationService {
         }
     }
 
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 0 8 * * *") // Every morning at 8am
     public void sendDailyDigests() {
-        List<String> userIdsWithDigests = userRepository.findAll().stream()
-                .map(User::getId)
-                .toList(); // Simplified, should check preferences
-        userIdsWithDigests.forEach(this::processDigest);
+        notificationRepository.findAll().stream()
+                .map(Notification::getUserId)
+                .distinct()
+                .forEach(this::processDigest);
     }
 }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
 import { useRole } from '../../hooks/useRole';
 import notificationService from '../../services/notificationService';
+import webSocketService from '../../services/websocketService';
 import NotificationDropdown from './NotificationDropdown';
 import { showToast } from '../Toast';
 import './NotificationBell.css';
@@ -15,7 +14,6 @@ const NotificationBell = () => {
   const [animate, setAnimate] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const dropdownRef = useRef(null);
-  const stompClient = useRef(null);
 
   const fetchUnreadCount = async () => {
     try {
@@ -47,73 +45,28 @@ const NotificationBell = () => {
   useEffect(() => {
     fetchUnreadCount();
     fetchPrefs();
-    // Fallback polling (more frequent update)
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-      fetchPrefs();
-    }, 15000); // 15 seconds poll for count
     
-    // WebSocket Connection
+    // WebSocket Connection using central service
     if (user && user.id) {
-      const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:8081/api').replace('/api', '');
-      const token = localStorage.getItem('token');
+      webSocketService.connect();
       
-      const client = new Client({
-        brokerURL: `${baseUrl.replace('http', 'ws')}/ws`,
-        connectHeaders: {
-          'Authorization': `Bearer ${token}`
-        },
-        debug: (str) => {
-          // console.log(str);
-        },
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+      const subscription = webSocketService.subscribe(`/user/${user.id}/queue/notifications`, (notification) => {
+        // Immediately update unread count state
+        setUnreadCount(prev => prev + 1);
+        triggerAnimation();
+        
+        // Show real-time Toast
+        showToast(
+          `${notification.title}: ${notification.message.substring(0, 50)}${notification.message.length > 50 ? '...' : ''}`,
+          notification.priority === 'HIGH' || notification.priority === 'URGENT' || notification.type === 'TICKET_CREATED' ? 'warning' : 'info',
+          6000
+        );
       });
 
-      // SockJS fallback if needed
-      client.webSocketFactory = () => {
-        const url = `${baseUrl}/ws?access_token=${token}`;
-        return new SockJS(url);
+      return () => {
+        webSocketService.unsubscribe(`/user/${user.id}/queue/notifications`);
       };
-
-      client.onConnect = (frame) => {
-        console.log('Connected to WebSocket');
-        // Clear internal set on reconnect maybe
-        client.subscribe(`/user/${user.id}/topic/notifications`, (message) => {
-          if (message.body) {
-            const notification = JSON.parse(message.body);
-            console.log('New real-time notification received:', notification);
-            
-            // Immediately update unread count state
-            setUnreadCount(prev => prev + 1);
-            triggerAnimation();
-            
-            // Show real-time Toast
-            showToast(
-              `${notification.title}: ${notification.message.substring(0, 50)}${notification.message.length > 50 ? '...' : ''}`,
-              notification.priority === 'HIGH' || notification.priority === 'URGENT' || notification.type === 'TICKET_CREATED' ? 'warning' : 'info',
-              6000
-            );
-          }
-        });
-      };
-
-      client.onStompError = (frame) => {
-        console.error('Broker reported error: ' + frame.headers['message']);
-        console.error('Additional details: ' + frame.body);
-      };
-
-      client.activate();
-      stompClient.current = client;
     }
-
-    return () => {
-      clearInterval(interval);
-      if (stompClient.current) {
-        stompClient.current.deactivate();
-      }
-    };
   }, [user?.id]);
 
   useEffect(() => {

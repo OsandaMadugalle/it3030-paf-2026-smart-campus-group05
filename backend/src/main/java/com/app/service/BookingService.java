@@ -13,6 +13,7 @@ import com.app.repository.FacilityRepository;
 import com.app.repository.UserRepository;
 import com.app.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,9 @@ public class BookingService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     public BookingResponse createBooking(BookingRequest request, UserPrincipal userPrincipal) {
         // Validate date is future
@@ -82,6 +86,9 @@ public class BookingService {
 
         // Notify Admins and Moderators
         notificationService.sendBookingRequestNotification(savedBooking);
+
+        // Send real-time update to Admin/Moderator dashboard
+        messagingTemplate.convertAndSend("/topic/bookings", mapToResponse(savedBooking));
 
         return mapToResponse(savedBooking);
     }
@@ -137,6 +144,11 @@ public class BookingService {
         // Notify user about approval
         notificationService.sendBookingApprovedNotification(savedBooking.getRequestedBy(), savedBooking);
 
+        // Send real-time update
+        messagingTemplate.convertAndSend("/topic/bookings", mapToResponse(savedBooking));
+        // Also notify user directly
+        messagingTemplate.convertAndSendToUser(savedBooking.getRequestedBy(), "/queue/bookings", mapToResponse(savedBooking));
+
         return mapToResponse(savedBooking);
     }
 
@@ -162,6 +174,11 @@ public class BookingService {
 
         // Notify user about rejection
         notificationService.sendBookingRejectedNotification(savedBooking.getRequestedBy(), savedBooking, request.getReason());
+
+        // Send real-time update
+        messagingTemplate.convertAndSend("/topic/bookings", mapToResponse(savedBooking));
+        // Also notify user directly
+        messagingTemplate.convertAndSendToUser(savedBooking.getRequestedBy(), "/queue/bookings", mapToResponse(savedBooking));
 
         return mapToResponse(savedBooking);
     }
@@ -193,6 +210,12 @@ public class BookingService {
 
         // Notify user about cancellation
         notificationService.sendBookingCancelledNotification(savedBooking.getRequestedBy(), savedBooking);
+
+        // Send real-time update to Admin/Moderator dashboard
+        messagingTemplate.convertAndSend("/topic/bookings", mapToResponse(savedBooking));
+        
+        // Also notify user directly
+        messagingTemplate.convertAndSendToUser(savedBooking.getRequestedBy(), "/queue/bookings", mapToResponse(savedBooking));
 
         return mapToResponse(savedBooking);
     }
