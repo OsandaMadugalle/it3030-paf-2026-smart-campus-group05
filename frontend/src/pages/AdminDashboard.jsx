@@ -130,17 +130,28 @@ const AdminDashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [usersRes, facilitiesRes, requestsRes, announcementsRes] = await Promise.all([
+      const [usersRes, facilitiesRes, requestsRes, announcementsRes, activitiesRes] = await Promise.all([
         api.get('/admin/users').catch(() => ({ data: [] })),
         api.get('/facilities?adminView=true').catch(() => ({ data: [] })),
         api.get('/bookings').catch(() => ({ data: [] })),
         api.get('/announcements').catch(() => ({ data: [] })),
+        api.get('/activities').catch(() => ({ data: [] })),
       ]);
       
       setUsers(usersRes.data || []);
       setFacilities(facilitiesRes.data || []);
       setRequests(requestsRes.data || []);
       setAnnouncements(announcementsRes.data || []);
+
+      // MAP REAL ACTIVITIES (userName -> user.name, targetResource -> target)
+      const realActivities = (activitiesRes.data || []).map(act => ({
+        id: act.id,
+        user: { name: act.userName }, 
+        action: act.action,
+        target: act.targetResource,
+        timestamp: new Date(act.timestamp)
+      }));
+      setActivities(realActivities);
       
       // Calculate stats
       const today = new Date().toDateString();
@@ -156,14 +167,6 @@ const AdminDashboard = () => {
         notificationsSent: notifications.length,
       });
       
-      // Generate mock activities
-      setActivities([
-        { id: 1, user: { name: 'John Doe' }, action: 'submitted a request for', target: 'Main Hall', timestamp: new Date(Date.now() - 300000) },
-        { id: 2, user: { name: 'Jane Smith' }, action: 'approved request for', target: 'Lab 201', timestamp: new Date(Date.now() - 900000) },
-        { id: 3, user: { name: 'Admin' }, action: 'created new facility', target: 'Sports Complex', timestamp: new Date(Date.now() - 1800000) },
-        { id: 4, user: { name: 'Mike Johnson' }, action: 'cancelled request for', target: 'Library', timestamp: new Date(Date.now() - 3600000) },
-        { id: 5, user: { name: 'Sarah Wilson' }, action: 'updated', target: 'Cafeteria status', timestamp: new Date(Date.now() - 7200000) },
-      ]);
       
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -189,8 +192,21 @@ const AdminDashboard = () => {
       showToast(`Booking Update: ${updatedBooking.resourceName} - ${updatedBooking.status}`, 'info');
     });
 
+    const activitySub = webSocketService.subscribe('/topic/activities', (act) => {
+      const newActivity = {
+        id: act.id,
+        user: { name: act.userName },
+        action: act.action,
+        target: act.targetResource,
+        timestamp: new Date(act.timestamp)
+      };
+      // Add to top and keep only 10
+      setActivities(prev => [newActivity, ...prev].slice(0, 10));
+    });
+
     return () => {
       webSocketService.unsubscribe('/topic/bookings');
+      webSocketService.unsubscribe('/topic/activities');
     };
   }, [fetchData]);
 
