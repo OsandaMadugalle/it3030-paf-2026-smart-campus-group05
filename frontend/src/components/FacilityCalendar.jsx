@@ -43,8 +43,15 @@ const FacilityCalendar = ({ onBookSlot }) => {
 
   // Format date to YYYY-MM-DD
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
-  };
+  const d = new Date(date);
+  const year = d.getFullYear();
+  // getMonth() is 0-indexed, so we add 1. 
+  // padStart ensures 05 instead of 5
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
 
   // Format date for display
   const formatDisplayDate = (date) => {
