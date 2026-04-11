@@ -367,7 +367,7 @@ public class TicketService {
 
         // 3. Build Groq Request Body (OpenAI compatible format)
         Map<String, Object> body = new HashMap<>();
-        body.put("model", "llama-3.1-8b-instant");
+        body.put("model", "llama-3.3-70b-versatile");
         body.put("temperature", 0.1); // Low temperature for consistent output
         
         List<Map<String, String>> messages = new ArrayList<>();
