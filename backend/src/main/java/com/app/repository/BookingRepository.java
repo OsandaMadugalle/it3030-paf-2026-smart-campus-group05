@@ -30,4 +30,6 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     List<Booking> findByResourceIdAndDateAndStatusIn(String resourceId, LocalDate date, List<BookingStatus> statuses);
 
     List<Booking> findByDateAndStatusAndReminderSentFalse(LocalDate date, BookingStatus status);
+
+    void deleteByStatus(BookingStatus status);
 }

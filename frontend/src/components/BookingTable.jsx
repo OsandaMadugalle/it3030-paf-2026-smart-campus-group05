@@ -8,6 +8,7 @@ const BookingTable = memo(({
   onReject, 
   onCancel, 
   onView,
+  onDelete, // NEW PROP ADDED
   loading = false 
 }) => {
   const styles = {
@@ -72,6 +73,7 @@ const BookingTable = memo(({
     },
     actions: {
       display: 'flex',
+      alignItems: 'center', // Added to center delete icon vertically
       gap: '6px',
     },
     actionBtn: (color) => ({
@@ -96,6 +98,19 @@ const BookingTable = memo(({
       cursor: 'pointer',
       transition: 'all 0.2s ease',
     },
+    // NEW: Delete Button Style
+    deleteBtn: {
+      padding: '6px',
+      borderRadius: '6px',
+      border: 'none',
+      backgroundColor: '#FEE2E2',
+      color: '#DC2626',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.2s ease',
+    },
     emptyState: {
       textAlign: 'center',
       padding: '40px 20px',
@@ -118,15 +133,6 @@ const BookingTable = memo(({
       month: 'short', 
       day: 'numeric',
       year: 'numeric'
-    });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit'
     });
   };
 
@@ -164,12 +170,6 @@ const BookingTable = memo(({
             ))}
           </tbody>
         </table>
-        <style>{`
-          @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-          }
-        `}</style>
       </div>
     );
   }
@@ -216,20 +216,12 @@ const BookingTable = memo(({
               <td style={styles.td}>{index + 1}</td>
               <td style={styles.td}>
                 <div style={styles.userCell}>
-                  {request.requestedByAvatar ? (
-                    <img 
-                      src={request.requestedByAvatar} 
-                      alt={request.requestedByName} 
-                      style={{ ...styles.avatar, objectFit: 'cover' }} 
-                    />
-                  ) : (
-                    <div style={styles.avatar}>{getInitials(request.requestedByName || request.user?.name || request.userName)}</div>
-                  )}
+                  <div style={styles.avatar}>{getInitials(request.requestedByName || request.user?.name || request.userName)}</div>
                   <span style={styles.userName}>{request.requestedByName || request.user?.name || request.userName || 'Unknown'}</span>
                 </div>
               </td>
               <td style={{ ...styles.td, ...styles.facilityCell }}>
-                {request.resourceName || request.facility?.name || request.facilityName || 'N/A'}
+                {request.resourceName || request.facility?.name || 'N/A'}
               </td>
               <td style={styles.td}>
                 <span style={{ maxWidth: '200px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -238,14 +230,14 @@ const BookingTable = memo(({
               </td>
               <td style={{ ...styles.td, ...styles.dateCell }}>
                 {formatDate(request.date || request.preferredDate)}
-                {(request.startTime || request.preferredTime) && (
+                {(request.startTime) && (
                   <span style={{ display: 'block', fontSize: '12px' }}>
                     {request.startTime} - {request.endTime}
                   </span>
                 )}
               </td>
               <td style={{ ...styles.td, ...styles.dateCell }}>
-                {formatDate(request.createdAt || request.submittedAt)}
+                {formatDate(request.createdAt)}
               </td>
               <td style={styles.td}>
                 <StatusBadge status={request.status || 'pending'} />
@@ -254,52 +246,35 @@ const BookingTable = memo(({
                 <td style={styles.td}>
                   <div style={styles.actions}>
                     {onView && (
-                      <button
-                        style={styles.viewBtn}
-                        onClick={() => onView(request)}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
-                      >
-                        View
-                      </button>
+                      <button style={styles.viewBtn} onClick={() => onView(request)}>View</button>
                     )}
-                    {(request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') && (
+                    
+                    {/* APPROVE / REJECT LOGIC */}
+                    {request.status?.toUpperCase() === 'PENDING' && (
                       <>
-                        {request.status?.toUpperCase() === 'PENDING' && (
-                          <>
-                            {onApprove && (
-                              <button
-                                style={styles.actionBtn('green')}
-                                onClick={() => onApprove(request)}
-                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#A7F3D0'}
-                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D1FAE5'}
-                              >
-                                Approve
-                              </button>
-                            )}
-                            {onReject && (
-                              <button
-                                style={styles.actionBtn('red')}
-                                onClick={() => onReject(request)}
-                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#FECACA'}
-                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
-                              >
-                                Reject
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {onCancel && (
-                          <button
-                            style={styles.actionBtn('gray')}
-                            onClick={() => onCancel(request)}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#E2E8F0'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-                          >
-                            Cancel
-                          </button>
-                        )}
+                        <button style={styles.actionBtn('green')} onClick={() => onApprove(request)}>Approve</button>
+                        <button style={styles.actionBtn('red')} onClick={() => onReject(request)}>Reject</button>
                       </>
+                    )}
+
+                    {/* CANCEL LOGIC */}
+                    {onCancel && (request.status?.toUpperCase() === 'PENDING' || request.status?.toUpperCase() === 'APPROVED') && (
+                      <button style={styles.actionBtn('gray')} onClick={() => onCancel(request)}>Cancel</button>
+                    )}
+
+                    {/* NEW: DELETE LOGIC (Available for Admin to delete any row) */}
+                    {onDelete && (
+                      <button 
+                        style={styles.deleteBtn} 
+                        onClick={() => onDelete(request.id)}
+                        title="Delete Permanently"
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#FECACA'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
                     )}
                   </div>
                 </td>

@@ -600,7 +600,7 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
                     onClick={() => handleStatusChange('assign')}
                     disabled={actionLoading}
                   >
-                    {actionLoading ? 'Processing...' : 'Assign to Me'}
+                    {actionLoading ? 'Processing...' : 'Assign to Technician'}
                   </button>
                 )}
 

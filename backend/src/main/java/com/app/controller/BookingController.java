@@ -142,4 +142,18 @@ public class BookingController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
+        bookingService.deleteBooking(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/status/{status}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteByStatus(@PathVariable BookingStatus status) {
+        bookingService.deleteByStatus(status);
+        return ResponseEntity.noContent().build();
+    }
 }
