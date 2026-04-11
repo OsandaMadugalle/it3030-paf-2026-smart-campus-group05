@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import webSocketService from '../services/websocketService';
@@ -744,6 +744,130 @@ const AdminDashboard = () => {
     }),
   };
 
+  // Calculated stats for the Reports Tab
+  // --- ANALYTICS CALCULATIONS (FIXED PEAK DAY) ---
+  const reportData = useMemo(() => {
+    if (!requests || requests.length === 0) {
+      return { mostRequested: 'N/A', peakDay: 'N/A', facilityDistribution: [] };
+    }
+
+    // 1 & 3. Facility Distribution
+    const counts = {};
+    requests.forEach(r => {
+      const name = r.resourceName || r.facility?.name || 'Unknown';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+
+    const facilityDistribution = Object.keys(counts).map(name => ({
+      label: name,
+      value: counts[name],
+      color: '#2563EB'
+    })).sort((a, b) => b.value - a.value);
+
+    const mostRequested = facilityDistribution[0]?.label || 'N/A';
+
+    // 2. Calculate Peak Day (Fixed Logic)
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayCounts = new Array(7).fill(0);
+    
+    // Get the timestamp for 7 days ago to filter range
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    requests.forEach(r => {
+      const dateSource = r.date || r.createdAt;
+      if (!dateSource) return;
+
+      // Handle timezone shifting: replace "-" with "/" to force local time parsing
+      // or ensure we handle the string safely.
+      const date = new Date(typeof dateSource === 'string' ? dateSource.replace(/-/g, '/') : dateSource);
+      
+      if (!isNaN(date) && date >= sevenDaysAgo) {
+        dayCounts[date.getDay()]++;
+      }
+    });
+
+    // Find the max value in the counts
+    const maxVal = Math.max(...dayCounts);
+    
+    // FIX: If max value is 0, don't default to Sunday
+    if (maxVal === 0) {
+      return { mostRequested, peakDay: 'N/A', facilityDistribution };
+    }
+
+    // Use lastIndexOf instead of indexOf to get the *most recent* peak day in case of a tie
+    const maxDayIndex = dayCounts.lastIndexOf(maxVal);
+    const peakDay = days[maxDayIndex];
+
+    return { mostRequested, peakDay, facilityDistribution };
+  }, [requests]);
+
+  // CSV Export Logic
+  const handleExportCSV = () => {
+    if (requests.length === 0) {
+      showToast("No data to export", "warning");
+      return;
+    }
+
+    const headers = ["Booking ID", "Date", "User", "Facility", "Status", "Purpose", "Designation"];
+    const rows = requests.map(r => [
+      r.id,
+      r.date,
+      r.requestedByName || r.user?.name,
+      r.resourceName || r.facility?.name,
+      r.status,
+      `"${(r.purpose || "").replace(/"/g, '""')}"`, // Handle commas in purpose
+      r.designation
+    ]);
+
+    const csvContent = [
+      ["SMART CAMPUS ANALYTICS REPORT"],
+      [`Generated: ${new Date().toLocaleString()}`],
+      [`Total Requests: ${requests.length}`],
+      [""], // Spacer
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Campus_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("CSV Exported successfully", "success");
+  };
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const handleDeleteRequest = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this booking permanently?")) return;
+    try {
+      await api.delete(`/bookings/${id}`);
+      showToast("Booking deleted", "success");
+      fetchData();
+    } catch (err) {
+      showToast("Failed to delete", "error");
+    }
+  };
+
+  const handleClearRejected = async () => {
+    setActionLoading(true);
+    try {
+      await api.delete('/bookings/status/REJECTED');
+      showToast("All rejected requests cleared", "success");
+      setShowClearConfirm(false);
+      fetchData();
+    } catch (err) {
+      showToast("Failed to clear requests", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Render Overview Tab
   const renderOverview = () => (
     <>
@@ -1024,7 +1148,19 @@ const AdminDashboard = () => {
           onApprove={handleApproveRequest}
           onReject={handleRejectRequest}
           onView={handleViewRequest}
+          onDelete={handleDeleteRequest}
           loading={loading}
+        />
+
+        <ConfirmModal
+          isOpen={showClearConfirm}
+          onClose={() => setShowClearConfirm(false)}
+          onConfirm={handleClearRejected}
+          title="Clear Rejected Requests"
+          message="This will permanently delete all rejected requests from the database. Are you sure?"
+          confirmLabel="Clear All"
+          confirmColor="#EF4444"
+          loading={actionLoading}
         />
 
         {totalPages > 1 && (
@@ -1510,15 +1646,17 @@ const AdminDashboard = () => {
           <option value="month">This Month</option>
           <option value="year">This Year</option>
         </select>
+        {/* UPDATED: Connected Export Button */}
         <button
-          style={{ ...styles.submitBtn, backgroundColor: '#F1F5F9', color: '#64748B' }}
+          onClick={handleExportCSV}
+          style={{ ...styles.submitBtn, backgroundColor: '#F1F5F9', color: '#64748B', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          Export Report
+          Export Report (.CSV)
         </button>
       </div>
 
@@ -1530,19 +1668,22 @@ const AdminDashboard = () => {
           icon="percent" 
           color="#10B981" 
         />
+        {/* UPDATED: Dynamic Most Requested */}
         <StatCard 
           title="Most Requested" 
-          value={requestsByFacility[0]?.label || 'N/A'} 
+          value={reportData.mostRequested} 
           icon="building" 
           color="#F59E0B" 
         />
-        <StatCard title="Peak Day" value="Monday" icon="calendar" color="#8B5CF6" />
+        {/* UPDATED: Dynamic Peak Day */}
+        <StatCard title="Peak Day" value={reportData.peakDay} icon="calendar" color="#8B5CF6" />
       </div>
 
       <div style={styles.chartsGrid}>
+        {/* UPDATED: Dynamic Bar Chart */}
         <CSSBarChart
           title="Requests by Facility"
-          data={requestsByFacility}
+          data={reportData.facilityDistribution}
           horizontal={true}
         />
         <CSSPieChart
@@ -1561,6 +1702,7 @@ const AdminDashboard = () => {
         />
       </div>
 
+      {/* Recent Activity Log Table stays as is */}
       <div style={{ ...styles.card, marginTop: '24px' }}>
         <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Recent Activity Log</h3>
         <table style={styles.table}>

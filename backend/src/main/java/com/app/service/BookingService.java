@@ -321,4 +321,15 @@ public class BookingService {
             System.err.println("Failed to log activity: " + e.getMessage());
         }
     }
+
+    public void deleteBooking(String id) {
+        if (!bookingRepository.existsById(id)) {
+            throw new BookingNotFoundException("Booking not found");
+    }
+    bookingRepository.deleteById(id);
+}
+
+    public void deleteByStatus(BookingStatus status) {
+        bookingRepository.deleteByStatus(status);
+    }
 }
