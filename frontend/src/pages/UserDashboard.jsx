@@ -361,6 +361,10 @@ const UserDashboard = () => {
     return tomorrow.toISOString().split("T")[0];
   };
 
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiSuggestion, setAiSuggestion] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);  
+
   const styles = {
     layout: {
       display: "flex",
@@ -881,15 +885,99 @@ const UserDashboard = () => {
         {/* Step 1: Select Facility */}
         {wizardStep === 1 && (
           <>
-            <h3
-              style={{
-                fontSize: "18px",
-                fontWeight: "600",
-                marginBottom: "20px",
-              }}
-            >
-              Select a Facility
+            <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "12px" }}>
+              Find a Facility
             </h3>
+
+            {/* NEW: AI INNOVATION SECTION */}
+            <div style={{ 
+              marginBottom: '24px', 
+              backgroundColor: '#F0F9FF', 
+              padding: '20px', 
+              borderRadius: '12px', 
+              border: '1px solid #BAE6FD',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.02)' 
+            }}>
+              <label style={{ 
+                fontSize: '13px', 
+                fontWeight: '700', 
+                color: '#0369A1', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                marginBottom: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Smart AI Assistant
+              </label>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  placeholder="Tell AI your needs (e.g. 'I need a room for 50 people with a projector tomorrow')"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  style={{ ...styles.input, flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #7DD3FC' }}
+                  onKeyPress={async (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        setIsAiLoading(true);
+                        try {
+                          const res = await api.post('/ai/suggest', { prompt: aiPrompt });
+                          setAiSuggestion(res.data.suggestion);
+                        } catch(err) {
+                          showToast("AI Assistant is currently offline", "error");
+                        } finally { setIsAiLoading(false); }
+                    }
+                  }}
+                />
+                <button 
+                  onClick={async () => {
+                    if (!aiPrompt.trim()) return;
+                    setIsAiLoading(true);
+                    try {
+                      const res = await api.post('/ai/suggest', { prompt: aiPrompt });
+                      setAiSuggestion(res.data.suggestion);
+                    } catch(err) {
+                      showToast("AI Assistant is currently offline", "error");
+                    } finally { setIsAiLoading(false); }
+                  }}
+                  style={{ ...styles.submitBtn, padding: '0 24px', backgroundColor: '#0EA5E9', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  disabled={isAiLoading}
+                >
+                  {isAiLoading ? <LoadingSpinner size="sm" color="#fff" /> : "Ask AI"}
+                </button>
+              </div>
+
+              {aiSuggestion && (
+                <div style={{ 
+                  marginTop: '16px', 
+                  fontSize: '14px', 
+                  color: '#0C4A6E', 
+                  lineHeight: '1.5',
+                  backgroundColor: '#FFFFFF', 
+                  padding: '12px 16px', 
+                  borderRadius: '8px', 
+                  borderLeft: '4px solid #0EA5E9',
+                  animation: 'fadeIn 0.3s ease-in'
+                }}>
+                  <strong style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#0EA5E9', textTransform: 'uppercase' }}>Grok Recommends:</strong>
+                  {aiSuggestion}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#E2E8F0' }}></div>
+                <span style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>OR SEARCH MANUALLY</span>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#E2E8F0' }}></div>
+            </div>
 
             <div style={{ marginBottom: "20px", position: "relative" }}>
               <input
@@ -1185,7 +1273,7 @@ const UserDashboard = () => {
                       min="1"
                     />
                   </div>
-                  <div style={{ flex: 1 }}></div> {/* Spacer for alignment */}
+                  <div style={{ flex: 1 }}></div>
                 </div>
 
                 <div style={styles.formGroup}>
@@ -1388,6 +1476,14 @@ const UserDashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* Small Fade-in animation style */}
+      <style>{`
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 
