@@ -25,3 +25,9 @@ spring.mail.properties.mail.smtp.starttls.enable=true
 # CORS
 app.cors.allowed-origins=http://localhost:3000
 app.frontend.url=http://localhost:3000
+
+# Groq AI Service
+groq.api.key=your-groq-api-key-here
+groq.api.url=https://api.groq.com/openai/v1/chat/completions
+groq.model=llama-3.3-70b-versatile
+
