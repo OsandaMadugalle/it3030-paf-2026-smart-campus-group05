@@ -9,10 +9,10 @@
 
 | Member | Name | Student ID | GitHub | Module |
 |--------|------|------------|--------|--------|
-| Member 1 | Manuth | IT21000001 | [@ManuthJaya2003](https://github.com/ManuthJaya2003) | Facilities & Assets Catalogue |
-| Member 2 | Shazra | IT21000002 | [@shazraHallaj12](https://github.com/shazraHallaj12) | Booking Management |
-| Member 3 | Lihini | IT21000003 | [@lashi10976-git](https://github.com/lashi10976-git) | Incident Ticket Management |
-| Member 4 | Osanda | IT21000004 | [@OsandaMadugalle](https://github.com/OsandaMadugalle) | Notifications + Auth + Roles |
+| Member 1 | JAYASEKARA M. E | IT23728776 | [@ManuthJaya2003](https://github.com/ManuthJaya2003) | Facilities & Assets Catalogue |
+| Member 2 | SASRA M. H. F | IT23693586 | [@shazraHallaj12](https://github.com/shazraHallaj12) | Booking Management |
+| Member 3 | GUNATHILAKE L.L.S.W | IT23744066 | [@lashi10976-git](https://github.com/lashi10976-git) | Incident Ticket Management |
+| Member 4 | MADUGALLE K. J. W. R. E. W. N. M. R. O. D | IT23555594 | [@OsandaMadugalle](https://github.com/OsandaMadugalle) | Notifications + Auth + Roles |
 
 ---
 
