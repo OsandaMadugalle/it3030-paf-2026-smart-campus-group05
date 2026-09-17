@@ -13,7 +13,7 @@ class WebSocketService {
     if (this.client && this.client.active) return;
 
     const token = localStorage.getItem('token');
-    const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:8081/api').replace('/api', '');
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8081/api').replace('/api', '');
     
     this.client = new Client({
       // brokerURL is overridden by webSocketFactory below (SockJS); kept for reference only

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from './api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
 // Normalise facility data from backend (UPPERCASE enums) to frontend (lowercase)
 const normaliseFacility = (facility) => ({
