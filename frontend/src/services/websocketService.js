@@ -16,19 +16,17 @@ class WebSocketService {
     const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:8081/api').replace('/api', '');
     
     this.client = new Client({
-      brokerURL: `${baseUrl.replace('http', 'ws')}/ws`,
+      // brokerURL is overridden by webSocketFactory below (SockJS); kept for reference only
       connectHeaders: {
         'Authorization': `Bearer ${token}`
       },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
+      reconnectDelay: 10000,   // back off 10s between reconnect attempts
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
     });
 
-    this.client.webSocketFactory = () => {
-      const url = `${baseUrl}/ws?access_token=${token}`;
-      return new SockJS(url);
-    };
+    // Use SockJS for transport — token passed via STOMP connectHeaders, NOT URL
+    this.client.webSocketFactory = () => new SockJS(`${baseUrl}/ws`);
 
     this.client.onConnect = (frame) => {
       this.connected = true;

@@ -1,32 +1,78 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
+// Decode JWT payload locally — no network needed
+const decodeToken = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpired = (decoded) => {
+  if (!decoded?.exp) return true;
+  // exp is in seconds; add 10s buffer
+  return decoded.exp * 1000 < Date.now() + 10_000;
+};
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem('token');
+  const decoded = token ? decodeToken(token) : null;
+
+  // Initialise user synchronously from the JWT so ProtectedRoute never
+  // needs to wait for a network round-trip before rendering.
+  const initialUser = decoded && !isTokenExpired(decoded)
+    ? {
+        id: decoded.sub,
+        email: decoded.email,
+        name: decoded.name,
+        avatarUrl: decoded.avatarUrl,
+        roles: decoded.roles
+          ? (typeof decoded.roles === 'string' ? decoded.roles.split(',') : decoded.roles)
+          : [],
+      }
+    : null;
+
+  const [user, setUser] = useState(initialUser);
+  // loading is false immediately when we can resolve from the token locally
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // On page load, rehydrate user state from the stored token by fetching
-    // the current user's profile. This ensures useAuth().user is populated
-    // after a hard refresh, not just right after login.
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.get('/user/me')
-        .then((res) => setUser(res.data))
-        .catch(() => {
-          // Token is invalid or expired — clear it and force re-login
-          localStorage.removeItem('token');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    // Skip background fetch if there's no token or it's already expired
+    if (!token || !decoded || isTokenExpired(decoded)) {
+      if (!token || isTokenExpired(decoded)) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
+      return;
     }
-  }, []);
 
-  const login = (userData, token) => {
-    localStorage.setItem('token', token);
+    // Silently refresh the full user profile in the background so that
+    // any profile changes (name, avatar, roles) are picked up without
+    // blocking the initial render.
+    api.get('/user/me')
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        // Token rejected by server — clear stale session
+        localStorage.removeItem('token');
+        setUser(null);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  const login = (userData, newToken) => {
+    localStorage.setItem('token', newToken);
     setUser(userData);
   };
 

@@ -30,7 +30,19 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+        <Suspense fallback={
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: '100vh', backgroundColor: '#F8FAFC'
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%',
+              border: '3px solid #E2E8F0', borderTopColor: '#2563EB',
+              animation: 'spin 0.7s linear infinite'
+            }} />
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          </div>
+        }>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
