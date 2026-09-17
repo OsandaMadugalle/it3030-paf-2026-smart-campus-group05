@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// Decode JWT token to get roles
+// Decode JWT token to get payload claims
 const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -37,6 +38,7 @@ const getDashboardPath = (roles) => {
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -48,17 +50,27 @@ const OAuthCallback = () => {
     }
 
     if (token) {
-      localStorage.setItem('token', token);
-      
-      // Decode token to get roles and redirect to correct dashboard
+      // Decode the token to extract user info and roles
       const decoded = decodeToken(token);
-      const dashboardPath = getDashboardPath(decoded?.roles);
       
+      // Build a minimal user object from the JWT claims so that
+      // useAuth().user is populated immediately after OAuth login
+      const userData = decoded ? {
+        id: decoded.sub,
+        email: decoded.email || decoded.sub,
+        name: decoded.name || decoded.email || decoded.sub,
+        roles: decoded.roles || [],
+      } : null;
+
+      // Store token AND update AuthContext so all consumers get the user
+      login(userData, token);
+
+      const dashboardPath = getDashboardPath(decoded?.roles);
       navigate(dashboardPath);
     } else {
       navigate('/login?error=No token received');
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, login]);
 
   return (
     <div style={{ 
