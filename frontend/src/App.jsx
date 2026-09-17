@@ -19,6 +19,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 // Booking Pages
 const MyBookings = lazy(() => import('./pages/bookings/MyBookings'));
 const CreateBooking = lazy(() => import('./pages/bookings/CreateBooking'));
+const BookingSuccess = lazy(() => import('./pages/bookings/BookingSuccess'));
 const AdminBookings = lazy(() => import('./pages/bookings/AdminBookings'));
 
 // Notification Pages
@@ -85,6 +86,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CreateBooking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings/success"
+              element={
+                <ProtectedRoute>
+                  <BookingSuccess />
                 </ProtectedRoute>
               }
             />

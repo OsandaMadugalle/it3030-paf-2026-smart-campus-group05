@@ -421,11 +421,12 @@ const AdminDashboard = () => {
     
     setActionLoading(true);
     try {
-      await api.post('/notifications', {
+      // Use /notifications/broadcast which accepts targetRole + priority
+      await api.post('/notifications/broadcast', {
         title: notificationTitle,
         message: notificationMessage,
-        target: notificationTarget,
-        type: notificationType,
+        targetRole: notificationTarget === 'all' ? 'all' : notificationTarget,
+        priority: notificationType === 'urgent' ? 'HIGH' : 'NORMAL',
       });
       showToast('Notification sent successfully', 'success');
       setNotifications(prev => [{
@@ -460,10 +461,10 @@ const AdminDashboard = () => {
 
   const filteredRequests = requests.filter(r => {
     const matchesSearch = !requestSearch || 
-      r.user?.name?.toLowerCase().includes(requestSearch.toLowerCase()) ||
-      r.facility?.name?.toLowerCase().includes(requestSearch.toLowerCase());
+      r.requestedByName?.toLowerCase().includes(requestSearch.toLowerCase()) ||
+      r.resourceName?.toLowerCase().includes(requestSearch.toLowerCase());
     const matchesStatus = !requestStatusFilter || r.status?.toLowerCase() === requestStatusFilter.toLowerCase();
-    const matchesFacility = !requestFacilityFilter || r.facility?.id === requestFacilityFilter;
+    const matchesFacility = !requestFacilityFilter || r.resourceId === requestFacilityFilter;
     return matchesSearch && matchesStatus && matchesFacility;
   });
 
@@ -478,7 +479,7 @@ const AdminDashboard = () => {
   // Report data
   const requestsByFacility = facilities.map(f => ({
     label: f.name,
-    value: requests.filter(r => r.facility?.id === f.id).length,
+    value: requests.filter(r => r.resourceId === f.id).length,
     color: '#2563EB',
   })).filter(d => d.value > 0).slice(0, 6);
 
@@ -754,7 +755,7 @@ const AdminDashboard = () => {
     // 1 & 3. Facility Distribution
     const counts = {};
     requests.forEach(r => {
-      const name = r.resourceName || r.facility?.name || 'Unknown';
+      const name = r.resourceName || 'Unknown';
       counts[name] = (counts[name] || 0) + 1;
     });
 
@@ -814,8 +815,8 @@ const AdminDashboard = () => {
     const rows = requests.map(r => [
       r.id,
       r.date,
-      r.requestedByName || r.user?.name,
-      r.resourceName || r.facility?.name,
+      r.requestedByName,
+      r.resourceName,
       r.status,
       `"${(r.purpose || "").replace(/"/g, '""')}"`, // Handle commas in purpose
       r.designation

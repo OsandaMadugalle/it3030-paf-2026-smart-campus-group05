@@ -45,6 +45,16 @@ public class AdminController {
     }
 
     /**
+     * PUT /api/admin/users/{id}/toggle-status
+     * (Admin only) Toggles the enabled/disabled status of a user account.
+     */
+    @PutMapping("/users/{id}/toggle-status")
+    public ResponseEntity<UserResponse> toggleUserStatus(@PathVariable String id) {
+        User user = userService.toggleUserStatus(id);
+        return ResponseEntity.ok(new UserResponse(user));
+    }
+
+    /**
      * DELETE /api/admin/users/{id}
      * (Admin only) Permanently deletes a user account from the system.
      */
