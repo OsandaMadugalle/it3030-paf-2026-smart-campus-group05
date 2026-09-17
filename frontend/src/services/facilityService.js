@@ -30,10 +30,18 @@ const normaliseType = (type) => {
   const map = {
     'LECTURE_HALL': 'hall',
     'LAB': 'lab',
-    'MEETING_ROOM': 'hall',
-    'EQUIPMENT': 'default',
+    'MEETING_ROOM': 'meeting',
+    'EQUIPMENT': 'equipment',
+    'SPORTS': 'sports',
+    'LIBRARY': 'library',
+    'CAFETERIA': 'cafeteria',
+    'PARKING': 'parking',
+    'DORMITORY': 'dormitory',
+    // Pass-through for already-normalised values
     'hall': 'hall',
     'lab': 'lab',
+    'meeting': 'meeting',
+    'equipment': 'equipment',
     'sports': 'sports',
     'library': 'library',
     'cafeteria': 'cafeteria',
@@ -63,18 +71,29 @@ const denormaliseStatus = (status) => {
 };
 
 const denormaliseType = (type) => {
+  // Map frontend display values back to the backend FacilityType enum.
+  // Each frontend label maps to its exact backend counterpart — no more
+  // lossy fallbacks that turned SPORTS into LECTURE_HALL, etc.
   const map = {
     'hall': 'LECTURE_HALL',
     'lab': 'LAB',
-    'sports': 'LECTURE_HALL',
-    'library': 'MEETING_ROOM',
-    'cafeteria': 'LECTURE_HALL',
-    'parking': 'EQUIPMENT',
-    'dormitory': 'LECTURE_HALL',
+    'meeting': 'MEETING_ROOM',
+    'equipment': 'EQUIPMENT',
+    'sports': 'SPORTS',
+    'library': 'LIBRARY',
+    'cafeteria': 'CAFETERIA',
+    'parking': 'PARKING',
+    'dormitory': 'DORMITORY',
+    // Pass-through for values already in backend enum format
     'LECTURE_HALL': 'LECTURE_HALL',
     'LAB': 'LAB',
     'MEETING_ROOM': 'MEETING_ROOM',
     'EQUIPMENT': 'EQUIPMENT',
+    'SPORTS': 'SPORTS',
+    'LIBRARY': 'LIBRARY',
+    'CAFETERIA': 'CAFETERIA',
+    'PARKING': 'PARKING',
+    'DORMITORY': 'DORMITORY',
   };
   return map[type] || 'LECTURE_HALL';
 };

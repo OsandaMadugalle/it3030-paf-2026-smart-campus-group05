@@ -31,9 +31,9 @@ export const useRole = () => {
     return decoded.roles.split(',');
   }, [decoded]);
 
-  const isAdmin = () => roles.includes('ROLE_ADMIN');
-  const isModerator = () => roles.includes('ROLE_MODERATOR');
-  const isUser = () => roles.includes('ROLE_USER');
+  const isAdmin = roles.includes('ROLE_ADMIN');
+  const isModerator = roles.includes('ROLE_MODERATOR');
+  const isUser = roles.includes('ROLE_USER');
   const hasRole = (role) => roles.includes(role);
 
   const getUserInfo = () => {

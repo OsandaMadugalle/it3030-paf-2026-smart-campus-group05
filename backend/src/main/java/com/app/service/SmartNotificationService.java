@@ -52,11 +52,12 @@ public class SmartNotificationService {
 
         StringBuilder sb = new StringBuilder();
         if (counts.containsKey("BOOKING")) sb.append("📅 ").append(counts.get("BOOKING")).append(" booking updates • ");
-        if (counts.containsKey("ANNOUNCEMENT")) sb.append("📢 ").append(counts.get("ANNOUNCEMENT")).append(" announcements • ");
-        if (counts.containsKey("SYSTEM")) sb.append("⚠️ ").append(counts.get("SYSTEM")).append(" system alerts");
-        
+        if (counts.containsKey("TICKET"))  sb.append("🎫 ").append(counts.get("TICKET")).append(" ticket updates • ");
+        if (counts.containsKey("SYSTEM"))  sb.append("⚠️ ").append(counts.get("SYSTEM")).append(" system alerts • ");
+
         String res = sb.toString().trim();
-        if (res.endsWith("•")) res = res.substring(0, res.length() - 2);
+        // Strip any trailing separator
+        if (res.endsWith("•")) res = res.substring(0, res.length() - 1).trim();
         
         return res.isEmpty() ? "No new updates" : res;
     }
