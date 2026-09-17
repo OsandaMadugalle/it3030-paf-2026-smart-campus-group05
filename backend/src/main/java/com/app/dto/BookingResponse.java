@@ -23,6 +23,7 @@ public class BookingResponse {
     private Integer expectedAttendees;
     private String designation;
     private BookingStatus status;
+    private String approvalNotes;
     private String rejectionReason;
     private String cancellationReason;
     private String approvedBy;
@@ -147,6 +148,14 @@ public class BookingResponse {
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public String getApprovalNotes() {
+        return approvalNotes;
+    }
+
+    public void setApprovalNotes(String approvalNotes) {
+        this.approvalNotes = approvalNotes;
     }
 
     public String getRejectionReason() {

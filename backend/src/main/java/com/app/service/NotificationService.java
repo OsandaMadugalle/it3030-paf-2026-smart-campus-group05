@@ -77,14 +77,14 @@ public class NotificationService {
         UserNotificationPreference prefs = preferenceRepository.findByUserId(userId)
                 .orElseGet(() -> preferenceRepository.save(UserNotificationPreference.builder().userId(userId).build()));
 
-        // Mute check logic moved to real-time delivery block below
-        if (prefs.isMuteAll()) {
-            if (prefs.getMutedUntil() != null && !prefs.getMutedUntil().isAfter(LocalDateTime.now())) {
-                // Auto unmute
-                prefs.setMuteAll(false);
-                prefs.setMutedUntil(null);
-                preferenceRepository.save(prefs);
-            }
+        // Auto-unmute: if mute window has expired, clear the flag and persist it
+        // so the delivery check below sees the updated state
+        if (prefs.isMuteAll()
+                && prefs.getMutedUntil() != null
+                && !prefs.getMutedUntil().isAfter(LocalDateTime.now())) {
+            prefs.setMuteAll(false);
+            prefs.setMutedUntil(null);
+            prefs = preferenceRepository.save(prefs); // reload with updated state
         }
 
         // Specific category toggle check

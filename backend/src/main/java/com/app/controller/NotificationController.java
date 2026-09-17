@@ -257,7 +257,8 @@ public class NotificationController {
     public ResponseEntity<Void> deleteNotification(
             @PathVariable String id,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-        Notification n = notificationRepository.findById(id).orElseThrow();
+        Notification n = notificationRepository.findById(id)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Notification not found: " + id));
         if (!n.getUserId().equals(currentUser.getId()) && !currentUser.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }

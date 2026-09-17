@@ -30,7 +30,15 @@ public class RoleController {
     @PostMapping("/admin/roles/assign")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> assignRole(@RequestBody RoleRequest request) {
-        Role role = Role.valueOf(request.getRole());
+        if (request.getRole() == null || request.getRole().isBlank()) {
+            throw new IllegalArgumentException("Role name must not be blank");
+        }
+        Role role;
+        try {
+            role = Role.valueOf(request.getRole().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + request.getRole());
+        }
         User user = roleService.assignRole(request.getUserId(), role);
         return ResponseEntity.ok(new UserResponse(user));
     }
@@ -42,7 +50,15 @@ public class RoleController {
     @PostMapping("/admin/roles/remove")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> removeRole(@RequestBody RoleRequest request) {
-        Role role = Role.valueOf(request.getRole());
+        if (request.getRole() == null || request.getRole().isBlank()) {
+            throw new IllegalArgumentException("Role name must not be blank");
+        }
+        Role role;
+        try {
+            role = Role.valueOf(request.getRole().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + request.getRole());
+        }
         User user = roleService.removeRole(request.getUserId(), role);
         return ResponseEntity.ok(new UserResponse(user));
     }
@@ -54,7 +70,12 @@ public class RoleController {
     @GetMapping("/admin/roles/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getUsersByRole(@RequestParam String role) {
-        Role roleEnum = Role.valueOf(role);
+        Role roleEnum;
+        try {
+            roleEnum = Role.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
         List<User> users = roleService.getUsersByRole(roleEnum);
         List<UserResponse> response = users.stream()
                 .map(UserResponse::new)

@@ -115,10 +115,20 @@ public class BookingService {
 
         if (status != null && date != null && resourceId != null) {
             bookings = bookingRepository.findByResourceIdAndDateAndStatus(resourceId, date, status);
+        } else if (status != null && date != null) {
+            // date + status, no resourceId — filter in memory to avoid passing null to the repo
+            bookings = bookingRepository.findByStatus(status).stream()
+                    .filter(b -> b.getDate().equals(date))
+                    .collect(Collectors.toList());
         } else if (status != null) {
             bookings = bookingRepository.findByStatus(status);
-        } else if (date != null) {
+        } else if (date != null && resourceId != null) {
             bookings = bookingRepository.findByResourceIdAndDate(resourceId, date);
+        } else if (date != null) {
+            // date only — use the date-range query with equal bounds
+            bookings = bookingRepository.findByDateBetween(date, date);
+        } else if (resourceId != null) {
+            bookings = bookingRepository.findByResourceId(resourceId);
         } else {
             bookings = bookingRepository.findAllByOrderByCreatedAtDesc();
         }
@@ -146,7 +156,7 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.APPROVED);
-        booking.setRejectionReason(request.getReason()); // Store approval notes if provided
+        booking.setApprovalNotes(request.getReason()); // Store optional approval notes in the dedicated field
         booking.setApprovedBy(userPrincipal.getId());
         booking.setApprovedByName(userPrincipal.getName());
         booking.setApprovedAt(LocalDateTime.now());
@@ -283,6 +293,7 @@ public class BookingService {
         response.setExpectedAttendees(booking.getExpectedAttendees());
         response.setDesignation(booking.getDesignation());
         response.setStatus(booking.getStatus());
+        response.setApprovalNotes(booking.getApprovalNotes());
         response.setRejectionReason(booking.getRejectionReason());
         response.setCancellationReason(booking.getCancellationReason());
         response.setApprovedBy(booking.getApprovedBy());

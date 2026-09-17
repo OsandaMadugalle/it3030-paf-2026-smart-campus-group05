@@ -63,6 +63,7 @@ public class Booking {
     private BookingStatus status = BookingStatus.PENDING;
 
     private boolean reminderSent = false;
+    private String approvalNotes;
     private String rejectionReason;
     private String cancellationReason;
 
@@ -207,6 +208,14 @@ public class Booking {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getApprovalNotes() {
+        return approvalNotes;
+    }
+
+    public void setApprovalNotes(String approvalNotes) {
+        this.approvalNotes = approvalNotes;
     }
 
     public String getCancellationReason() {
