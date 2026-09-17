@@ -5,6 +5,8 @@
   "dependencies": {
     "@stomp/stompjs": "^7.3.0",
     "axios": "^1.6.2",
+    "baseline-browser-mapping": "^2.11.24",
+    "caniuse-lite": "^1.0.30001810",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
