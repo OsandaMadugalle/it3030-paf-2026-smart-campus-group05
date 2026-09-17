@@ -233,7 +233,7 @@ const StatusTimeline = ({ history, createdAt, reporterName }) => {
 const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) => {
   const { getUserInfo, isAdmin, isModerator } = useRole();
   const userInfo = getUserInfo();
-  const isStaff = isAdmin() || isModerator();
+  const isStaff = isAdmin || isModerator;
 
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -625,7 +625,7 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
                   </div>
                 )}
 
-                {selectedTicket.status === 'RESOLVED' && isAdmin() && (
+                {selectedTicket.status === 'RESOLVED' && isAdmin && (
                   <div style={{ backgroundColor: '#DBEAFE', padding: '12px', borderRadius: '10px' }}>
                     <p style={{ fontSize: '12px', color: '#1E40AF', marginBottom: '8px' }}>
                       Technician has resolved this. Proceed to close?
@@ -640,7 +640,7 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
                   </div>
                 )}
 
-                {(selectedTicket.status === 'OPEN' || selectedTicket.status === 'IN_PROGRESS') && isAdmin() && (
+                {(selectedTicket.status === 'OPEN' || selectedTicket.status === 'IN_PROGRESS') && isAdmin && (
                   <div style={{ borderTop: '1px solid #CBD5E1', paddingTop: '10px', marginTop: '10px' }}>
                     <label style={{ fontSize: '11px', color: '#EF4444', fontWeight: '700' }}>DANGER ZONE</label>
                     <input
@@ -662,7 +662,7 @@ const IncidentManager = ({ forceOpenCreate = false, onModalClose = () => {} }) =
                   </div>
                 )}
 
-                {selectedTicket.status === 'CLOSED' && isAdmin() && (
+                {selectedTicket.status === 'CLOSED' && isAdmin && (
                   <button
                     style={{ ...styles.btnPrimary, backgroundColor: '#991B1B' }}
                     onClick={handleDeleteTicket}

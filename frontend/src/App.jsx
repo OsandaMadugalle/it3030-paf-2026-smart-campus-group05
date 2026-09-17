@@ -29,7 +29,7 @@ const MyNotificationAnalytics = lazy(() => import('./pages/notifications/MyNotif
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense fallback={
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
