@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/facilities")
-@CrossOrigin(origins = "*")   // adjust to your frontend URL in production
 public class FacilityController {
 
     private final FacilityService facilityService;

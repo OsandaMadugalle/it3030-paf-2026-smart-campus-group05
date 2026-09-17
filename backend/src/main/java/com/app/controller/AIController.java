@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "*") // Allows your React frontend to connect
 public class AIController {
 
     @Autowired

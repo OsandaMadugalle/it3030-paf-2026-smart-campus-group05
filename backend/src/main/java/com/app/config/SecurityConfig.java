@@ -15,7 +15,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -55,7 +55,11 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exception -> exception
-                .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+                // Return 401 Unauthorized for unauthenticated requests, not 403 Forbidden
+                .authenticationEntryPoint(
+                    (request, response, authException) ->
+                        response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized")
+                )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
@@ -64,7 +68,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/moderator/**").hasAnyRole("MODERATOR", "ADMIN")
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/uploads/**").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/api/facilities").permitAll() // public read-only list
+                .anyRequest().authenticated() // all other endpoints require authentication
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage(frontendUrl + "/login")
