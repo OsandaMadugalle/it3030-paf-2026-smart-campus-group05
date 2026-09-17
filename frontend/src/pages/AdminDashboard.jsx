@@ -38,14 +38,16 @@ const AdminDashboard = () => {
   // Auto-switch tab based on notification redirect state
   useEffect(() => {
     if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-      // Clear state to prevent re-switching if user manually navigates
+      const tab = location.state.activeTab;
+      // Clear the navigation state immediately before setting the tab
+      // so a subsequent render doesn't re-apply it
       window.history.replaceState({}, document.title);
+      setActiveTab(tab);
     }
   }, [location.state]);
 
   React.useEffect(() => {
-    // Redirect if bookings tab is selected (if it somehow exists)
+    // 'bookings' tab was removed — redirect to overview if somehow reached
     if (activeTab === 'bookings') {
       setActiveTab('overview');
     }
@@ -2007,17 +2009,16 @@ const AdminDashboard = () => {
     }
 
     switch (activeTab) {
-      case 'overview': return renderOverview();
-      case 'facilities': return renderFacilities();
-      case 'bookings': return renderBookings();
-      case 'requests': return renderRequests();
-      case 'users': return renderUsers();
-      case 'announcements': return renderAnnouncements();
-      case 'reports': return renderReports();
-      case 'notifications': return renderNotifications();
-      case 'profile': return renderProfile();
-      case 'incidents': return <IncidentManager />;
-      default: return renderOverview();
+      case 'overview':        return renderOverview();
+      case 'facilities':      return renderFacilities();
+      case 'requests':        return renderRequests();
+      case 'users':           return renderUsers();
+      case 'announcements':   return renderAnnouncements();
+      case 'reports':         return renderReports();
+      case 'notifications':   return renderNotifications();
+      case 'profile':         return renderProfile();
+      case 'incidents':       return <IncidentManager />;
+      default:                return renderOverview();
     }
   };
 
