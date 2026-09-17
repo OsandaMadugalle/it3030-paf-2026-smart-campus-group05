@@ -103,20 +103,21 @@ const ModeratorDashboard = () => {
     // Backend: userName -> Frontend: user.name
     // Backend: targetResource -> Frontend: target
     const realActivities = (activitiesRes.data || []).map(act => {
-      // Determine type for styling
+      // Determine type for styling — guard against null/undefined action
+      const action = act.action ?? '';
       let type = 'request'; // Default blue
-      if (act.action.includes('approved')) type = 'success'; // Green
-      if (act.action.includes('cancelled') || act.action.includes('rejected')) type = 'danger'; // Red
-      if (act.action.includes('updated')) type = 'warning'; // Orange
-      if (act.action.includes('created')) type = 'new'; // Blue +
+      if (action.includes('approved')) type = 'success'; // Green
+      if (action.includes('cancelled') || action.includes('rejected')) type = 'danger'; // Red
+      if (action.includes('updated')) type = 'warning'; // Orange
+      if (action.includes('created')) type = 'new'; // Blue +
 
       return {
         id: act.id,
-        user: { name: act.userName },
-        action: act.action,
-        target: act.targetResource,
-        timestamp: new Date(act.timestamp),
-        type: type // Send this type to the ActivityFeed component
+        user: { name: act.userName ?? 'Unknown' },
+        action: action,
+        target: act.targetResource ?? '',
+        timestamp: act.timestamp ? new Date(act.timestamp) : new Date(),
+        type: type
       };
     });
 
