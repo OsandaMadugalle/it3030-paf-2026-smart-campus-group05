@@ -144,8 +144,8 @@ const ActivityFeed = ({
 
   // --- REFINED ICON LOGIC ---
   const renderIcon = (action) => {
-    const color = getActionColor(action);
-    const act = action.toLowerCase();
+    const act = (action ?? '').toLowerCase();
+    const color = getActionColor(act);
     
     if (act.includes('approve')) return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>;
     if (act.includes('cancel') || act.includes('reject')) return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
