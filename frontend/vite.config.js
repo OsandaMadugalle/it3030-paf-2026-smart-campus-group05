@@ -2,12 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Include .js files for JSX transform so existing files don't need renaming
+      include: '**/*.{jsx,js}',
+    }),
+  ],
   server: {
-    port: 3000,         // keep same port as CRA
-    open: true,         // auto-open browser
+    port: 3000,
     proxy: {
-      // Proxy /api calls to the Spring Boot backend to avoid CORS during dev
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
@@ -15,6 +18,6 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'build',    // keep same output dir as CRA
+    outDir: 'build',
   },
 });
