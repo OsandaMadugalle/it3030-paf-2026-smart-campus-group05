@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useWindowSize';
 import heroImage from '../assets/hero.jpg';
@@ -8,6 +8,16 @@ import PublicFooter from '../components/PublicFooter';
 const LandingPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [searchParams] = useSearchParams();
+
+  // Prefetch dashboard chunks in the background while the user reads the landing page
+  useEffect(() => {
+    const id = requestIdleCallback(() => {
+      import('./UserDashboard');
+      import('./AdminDashboard');
+      import('./ModeratorDashboard');
+    }, { timeout: 3000 });
+    return () => cancelIdleCallback(id);
+  }, []);
   const error = searchParams.get('error');
   const isMobile = useIsMobile();
 

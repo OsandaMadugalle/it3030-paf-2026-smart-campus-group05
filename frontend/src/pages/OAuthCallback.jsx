@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Decode JWT token to get payload claims
 const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -15,24 +14,28 @@ const decodeToken = (token) => {
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('Error decoding token:', error);
     return null;
   }
 };
 
-// Determine dashboard based on role hierarchy: Admin > Moderator > User
 const getDashboardPath = (roles) => {
   if (!roles || roles.length === 0) return '/dashboard/user';
-  
   const roleList = typeof roles === 'string' ? roles.split(',') : roles;
-  
-  if (roleList.includes('ROLE_ADMIN')) {
-    return '/dashboard/admin';
-  }
-  if (roleList.includes('ROLE_MODERATOR')) {
-    return '/dashboard/moderator';
-  }
+  if (roleList.includes('ROLE_ADMIN')) return '/dashboard/admin';
+  if (roleList.includes('ROLE_MODERATOR')) return '/dashboard/moderator';
   return '/dashboard/user';
+};
+
+// Prefetch the correct dashboard chunk while the spinner shows,
+// so the lazy import is already resolved before navigate() fires.
+const prefetchDashboard = (path) => {
+  if (path.includes('admin')) {
+    import('./AdminDashboard');
+  } else if (path.includes('moderator')) {
+    import('./ModeratorDashboard');
+  } else {
+    import('./UserDashboard');
+  }
 };
 
 const OAuthCallback = () => {
@@ -50,11 +53,7 @@ const OAuthCallback = () => {
     }
 
     if (token) {
-      // Decode the token to extract user info and roles
       const decoded = decodeToken(token);
-      
-      // Build a minimal user object from the JWT claims so that
-      // useAuth().user is populated immediately after OAuth login
       const userData = decoded ? {
         id: decoded.sub,
         email: decoded.email || decoded.sub,
@@ -62,10 +61,14 @@ const OAuthCallback = () => {
         roles: decoded.roles || [],
       } : null;
 
-      // Store token AND update AuthContext so all consumers get the user
       login(userData, token);
 
       const dashboardPath = getDashboardPath(decoded?.roles);
+
+      // Start downloading the dashboard JS chunk immediately
+      // so it's ready by the time navigate() renders the route
+      prefetchDashboard(dashboardPath);
+
       navigate(dashboardPath);
     } else {
       navigate('/login?error=No token received');
@@ -73,26 +76,20 @@ const OAuthCallback = () => {
   }, [searchParams, navigate, login]);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh' 
+    <div style={{
+      display: 'flex', justifyContent: 'center',
+      alignItems: 'center', height: '100vh',
+      backgroundColor: '#F8FAFC', fontFamily: "'Inter', sans-serif",
     }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ 
-          width: '40px', 
-          height: '40px', 
-          border: '4px solid #f3f3f3',
-          borderTop: '4px solid #3498db',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 20px'
+        <div style={{
+          width: '44px', height: '44px',
+          border: '3px solid #E2E8F0', borderTopColor: '#2563EB',
+          borderRadius: '50%', animation: 'spin 0.7s linear infinite',
+          margin: '0 auto 16px',
         }} />
-        <p>Processing login...</p>
-        <style>
-          {`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}
-        </style>
+        <p style={{ color: '#64748B', fontSize: '14px' }}>Signing you in…</p>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     </div>
   );

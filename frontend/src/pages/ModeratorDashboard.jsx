@@ -29,7 +29,7 @@ const ModeratorDashboard = () => {
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // false = show UI immediately, data loads in bg
 
   // Auto-switch tab based on notification redirect state
   useEffect(() => {
